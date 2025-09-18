@@ -3,9 +3,9 @@ package Sim;
 // This class implements a link without any loss, jitter or delay
 
 public class Link extends SimEnt{
-	private SimEnt _connectorA=null;
-	private SimEnt _connectorB=null;
-	private int _now=0;
+	protected SimEnt _connectorA=null;
+	protected SimEnt _connectorB=null;
+	protected int _now=0;
 	
 	public Link()
 	{

@@ -7,7 +7,8 @@ public class Run {
 	{
  		//Creates two links
  		Link link1 = new Link();
-		Link link2 = new Link();
+		//Link link2 = new Link();
+		LossyLink link2 = new LossyLink(10,1,0.1);
 		
 		// Create two end hosts that will be
 		// communicating via the router
@@ -29,9 +30,9 @@ public class Run {
 		
 		// Generate some traffic
 		// host1 will send 3 messages with time interval 5 to network 2, node 1. Sequence starts with number 1
-		host1.StartSending(2, 2, 3, 5, 1); 
+		host1.StartSending(2, 1, 10, 5, 1);
 		// host2 will send 2 messages with time interval 10 to network 1, node 1. Sequence starts with number 10
-		host2.StartSending(1, 1, 2, 10, 10); 
+		//host2.StartSending(1, 1, 2, 10, 10);
 		
 		// Start the simulation engine and of we go!
 		Thread t=new Thread(SimEngine.instance());
