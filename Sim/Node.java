@@ -3,12 +3,15 @@ package Sim;
 // This class implements a node (host) it has an address, a peer that it communicates with
 // and it count messages send and received.
 
+import java.util.Random;
+
 public class Node extends SimEnt {
 	private NetworkAddr _id;
 	private SimEnt _peer;
 	private int _sentmsg=0;
 	private int _seq = 0;
 
+	Random r = new Random(3);
 	
 	public Node (int network, int node)
 	{
@@ -40,7 +43,7 @@ public class Node extends SimEnt {
 	// In one of the labs you will create some traffic generators
 	
 	private int _stopSendingAfter = 0; //messages
-	private int _timeBetweenSending = 10; //time between messages
+	private int _timeBetweenSending = 0; //time between messages
 	private int _toNetwork = 0;
 	private int _toHost = 0;
 	

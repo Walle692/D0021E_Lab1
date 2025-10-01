@@ -57,7 +57,6 @@ public final class SimEngine implements Runnable {
 		_quit = false;
 	}
 	
-	
 	// We can only have one engine in the simulator so this method
 	// sees to that. In other words we have implemented a singleton
 	

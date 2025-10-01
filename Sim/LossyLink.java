@@ -7,10 +7,7 @@ public class LossyLink extends Link {
     private int delay;
     private double jitter;
     private double drop;
-
-    private int test = 0;
-
-    Random r = new Random(2);
+    Random r = new Random(3);
 
     public LossyLink(int delay, double jitter, double drop){
         super();
@@ -44,10 +41,10 @@ public class LossyLink extends Link {
         if (ev instanceof Message)
         {
             if(this.dropOrNot()){
-                System.out.println("Link lost msg, HASKDHASKLDH");
+                System.out.println("Link lost msg, packet dropped");
                 return;
             }
-            System.out.println("Link recv msg, passes it through");
+            //System.out.println("Link recv msg, passes it through");
             if (src == _connectorA) {
                 send(_connectorB, ev, _now + delay + jitterTime());
             } else {
