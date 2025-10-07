@@ -6,15 +6,15 @@ public class Run {
 	public static void main (String [] args)
 	{
 
-		LossyLink link1 = new LossyLink(10,2,0);
+		Link link1 = new Link();
  		Link link2 = new Link();
 		Link link3 = new Link();
 
 
 		
 
-		Node host1 = new Node(1,1);
-		Node host2 = new Node(2,1);
+		NodeGaussian host1 = new NodeGaussian(1, 1);
+		NodePoisson host2 = new NodePoisson(2,1);
 		Node host3 = new Node(3,1);
 
 
@@ -35,8 +35,9 @@ public class Run {
 		
 		// Generate some traffic
 
-		host1.StartSending(3, 1, 5, 5, 1);
-		host2.StartSending(3, 1, 5, 5, 10);
+		//host1.StartSending(3, 1, 5, 3, 10, 0);
+		host2.poissonStartSending(3,1, 5, 10, 0);
+		//host2.StartSending(3, 1, 5, 5, 10);
 
 		// host2 will send 2 messages with time interval 10 to network 1, node 1. Sequence starts with number 10
 		//host2.StartSending(1, 1, 2, 10, 10);
