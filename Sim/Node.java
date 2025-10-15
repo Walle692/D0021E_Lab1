@@ -69,6 +69,17 @@ public class Node extends SimEnt {
         send(this, new TimerEvent(),0);
     }
 
+    public void StartSendingDelay(int network, int node, int number, int timeInterval, int startSeq, double delay)
+    {
+        this.currentMode = "uniform";
+        _stopSendingAfter = number;
+        _timeBetweenSending = timeInterval;
+        _toNetwork = network;
+        _toHost = node;
+        _seq = startSeq;
+        send(this, new TimerEvent(), delay);
+    }
+
     private double nextGauss(){
         double time = r.nextGaussian(this.median, this.stddev);
         if (time < 0){
