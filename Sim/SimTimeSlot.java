@@ -35,7 +35,7 @@ class SimTimeSlot implements Comparable {
 				return -1;
 			else if (this._resolver > other._resolver)
 				return +1;
-			else 
+			else
 				return 0;
 		}
 	}

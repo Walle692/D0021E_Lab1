@@ -24,14 +24,13 @@ public class Router extends SimEnt{
 		if (interfaceNumber<_interfaces)
 		{
             for (int i=0;i<_interfaces;i++){
-                if (_routingTable[i] == null) {
-                    //do nothing
-                } else if (_routingTable[i].node().equals(node)){
-                    System.out.println("table entry found, removing entry for node" + node);
+                if(_routingTable[i]!=null && _routingTable[i].node().equals(node)){
+                    System.out.println("Router already connected to "+_routingTable[i].node()+" Removing Table entry");
                     _routingTable[i] = null;
                 }
             }
 			_routingTable[interfaceNumber] = new RouteTableEntry(link, node);
+            System.out.println("Router connected to "+_routingTable[interfaceNumber].node()+" Adding Table entry on interface "+interfaceNumber);
 		}
 		else
 			System.out.println("Trying to connect to port not in router");

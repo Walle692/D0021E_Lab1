@@ -11,18 +11,17 @@ public class Run {
 		new java.io.File("poisson.csv").delete();
 		new java.io.File("uniform.csv").delete();
 
-		Link link1 = new Link();
-		Link link4 = new Link();
+		Link stableLink = new Link();
+        Link moverLink = new Link();
 
-		Node host1 = new Node(1, 1);
-		Node host2 = new Node(2, 2);
+		Node stableNode = new Node(1, 1);
+		Node moverNode = new Node(2, 2);
 
 
 
 		//Connect links to hosts
-		host1.setPeer(link1);
-
-		host2.setPeer(link4);
+        stableNode.setPeer(stableLink);
+        moverNode.setPeer(moverLink);
 
 		// Creates as router and connect
 		// links to it. Information about 
@@ -31,26 +30,23 @@ public class Run {
 		// Note. A switch is created in same way using the Switch class
 		Router routeNode = new Router(4);
 
-		routeNode.connectInterface(0, link1, host1);
-		routeNode.connectInterface(3, link4, host2);
+        routeNode.connectInterface(0, stableLink, stableNode);
+        routeNode.connectInterface(1, moverLink, moverNode);
+
 		
 		// Generate some traffic
-
-        host1.StartSending(2, 2, 50, 5, 0);
-
+        stableNode.StartSending(2, 2, 100, 1, 0);
 		
 		// Start the simulation engine and of we go!
 		Thread t=new Thread(SimEngine.instance());
 	
 		t.start();
 
-
-
-        routeNode.connectInterface(2, link4, host2);
-
 		try
 		{
-			t.join();
+            t.sleep(30);
+            routeNode.connectInterface(2, moverLink, moverNode);
+            t.join(3000);
 		}
 		catch (Exception e)
 		{
