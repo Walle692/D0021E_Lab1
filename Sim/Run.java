@@ -47,9 +47,9 @@ public class Run {
 		
 		// Generate some traffic
 
-		host1.StartSendingGauss(4, 1, 100, 5, 10, 1000);
-		host2.poissonStartSending(4,1, 100, 5, 2000);
-		host3.StartSending(4, 1, 100, 5, 3000);
+		host1.StartSendingGauss(4, 1, 100, 5, 10, 0);
+		host2.poissonStartSending(4,1, 100, 5, 0);
+		host3.StartSending(4, 1, 100, 5, 0);
 
 		// host2 will send 2 messages with time interval 10 to network 1, node 1. Sequence starts with number 10
 		//host2.StartSending(1, 1, 2, 10, 10);

@@ -161,7 +161,7 @@ public class Node extends SimEnt {
 
             try {
                 BufferedWriter writer = new BufferedWriter(new FileWriter("out.csv", true));
-                writer.write(_id.networkId() + "." + _id.nodeId() + "," + ((Message) ev).seq() + ',' + SimEngine.getTime());
+                writer.write(_id.networkId() + "." + _id.nodeId() + "," + ((Message) ev).source().networkId() +","+ ((Message) ev).seq() + ',' + SimEngine.getTime());
                 writer.newLine();
                 writer.close();
             } catch (IOException e) {
