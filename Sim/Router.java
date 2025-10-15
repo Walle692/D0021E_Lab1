@@ -23,6 +23,14 @@ public class Router extends SimEnt{
 	{
 		if (interfaceNumber<_interfaces)
 		{
+            for (int i=0;i<_interfaces;i++){
+                if (_routingTable[i] == null) {
+                    //do nothing
+                } else if (_routingTable[i].node().equals(node)){
+                    System.out.println("table entry found, removing entry for node" + node);
+                    _routingTable[i] = null;
+                }
+            }
 			_routingTable[interfaceNumber] = new RouteTableEntry(link, node);
 		}
 		else
