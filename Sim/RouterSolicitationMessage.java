@@ -6,12 +6,12 @@ package Sim;
 
 public class RouterSolicitationMessage implements Event{
     private NetworkAddr _source;
-    //private NetworkAddr _destination;
+    private NetworkAddr _destination;
 
-    RouterSolicitationMessage (NetworkAddr from)
+    RouterSolicitationMessage (NetworkAddr from, NetworkAddr to)
     {
         _source = from;
-        //_destination = to;
+        _destination = to;
     }
 
     public NetworkAddr source()
@@ -19,10 +19,10 @@ public class RouterSolicitationMessage implements Event{
         return _source;
     }
 
-    //public NetworkAddr destination()
-    //{
-    //     return _destination;
-    //}
+    public NetworkAddr destination()
+    {
+         return _destination;
+    }
 
     public void entering(SimEnt locale)
     {

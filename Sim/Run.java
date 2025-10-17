@@ -57,6 +57,7 @@ public class Run {
 		{
             t.sleep(5);
             foreignRouter.connectInterface(2, inbetweenLink, homerouter);
+            t.sleep(5);
             homerouter.connectInterface(2, inbetweenLink, foreignRouter);
             //t.sleep(30);
             //homerouter.connectInterface(2, moverLink, moverNode);

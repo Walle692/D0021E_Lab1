@@ -44,13 +44,34 @@ public class Router extends SimEnt{
 			System.out.println("Trying to connect to port not in router");
 		
 		((Link) link).setConnector(this);
-        sendRouterSolicitation(interfaceNumber);
+        if (_routingTable[interfaceNumber].link() != null && _routingTable[interfaceNumber].link() instanceof Link) {
+            if (((Link) _routingTable[interfaceNumber].link()).isFullyConnected()) {
+
+                sendRouterSolicitation(interfaceNumber);
+            }
+        }
+
 	}
 
     private void sendRouterSolicitation(int interfaceNumber){
-        System.out.println("Solicitation Sent");
-        RouterSolicitationMessage rsm = new RouterSolicitationMessage(this.getAddr());
-        send (_routingTable[interfaceNumber].link(), rsm, _now);
+        if (_routingTable[interfaceNumber].node() instanceof Node) {
+            RouterSolicitationMessage rsm = new RouterSolicitationMessage(
+                    this.getAddr(),
+                    ((Node) _routingTable[interfaceNumber].node()).getAddr()
+            );
+            send(_routingTable[interfaceNumber].link(), rsm, _now);
+        } else {
+            System.out.println("Error: Node is not an instance of Node.");
+            RouterSolicitationMessage rsm = new RouterSolicitationMessage(
+                    this.getAddr(),
+                    ((Router) _routingTable[interfaceNumber].node()).getAddr()
+            );
+            send(_routingTable[interfaceNumber].link(), rsm, _now);
+        }
+
+        //System.out.println("Solicitation Sent");
+        //RouterSolicitationMessage rsm = new RouterSolicitationMessage(this.getAddr(), (Node) _routingTable[interfaceNumber].node().getAddr());
+        //send (_routingTable[interfaceNumber].link(), rsm, _now);
     }
 
 
@@ -65,7 +86,7 @@ public class Router extends SimEnt{
 			if (_routingTable[i] != null)
 			{
                 if (_routingTable[i].node().getClass() == Router.class){
-
+                    routerInterface = _routingTable[i].link();
                 } else if (((Node) _routingTable[i].node()).getAddr().networkId() == networkAddress)
 				{
 					routerInterface = _routingTable[i].link();
