@@ -7,14 +7,20 @@ public class Router extends SimEnt{
 	private RouteTableEntry [] _routingTable;
 	private int _interfaces;
 	private int _now=0;
-
+    private NetworkAddr _id;
 	// When created, number of interfaces are defined
 	
-	Router(int interfaces)
+	Router(int interfaces, int network, int routerID)
 	{
 		_routingTable = new RouteTableEntry[interfaces];
 		_interfaces=interfaces;
+        _id = new NetworkAddr(network, routerID);
 	}
+
+    public NetworkAddr getAddr()
+    {
+        return _id;
+    }
 	
 	// This method connects links to the router and also informs the 
 	// router of the host connects to the other end of the link
@@ -31,12 +37,22 @@ public class Router extends SimEnt{
             }
 			_routingTable[interfaceNumber] = new RouteTableEntry(link, node);
             System.out.println("Router connected to "+_routingTable[interfaceNumber].node()+" Adding Table entry on interface "+interfaceNumber);
+            //Send router solicitation here? if node to see if node is router
+
 		}
 		else
 			System.out.println("Trying to connect to port not in router");
 		
 		((Link) link).setConnector(this);
+        sendRouterSolicitation(interfaceNumber);
 	}
+
+    private void sendRouterSolicitation(int interfaceNumber){
+        System.out.println("Solicitation Sent");
+        RouterSolicitationMessage rsm = new RouterSolicitationMessage(this.getAddr());
+        send (_routingTable[interfaceNumber].link(), rsm, _now);
+    }
+
 
 	// This method searches for an entry in the routing table that matches
 	// the network number in the destination field of a messages. The link
@@ -48,7 +64,9 @@ public class Router extends SimEnt{
 		for(int i=0; i<_interfaces; i++)
 			if (_routingTable[i] != null)
 			{
-				if (((Node) _routingTable[i].node()).getAddr().networkId() == networkAddress)
+                if (_routingTable[i].node().getClass() == Router.class){
+
+                } else if (((Node) _routingTable[i].node()).getAddr().networkId() == networkAddress)
 				{
 					routerInterface = _routingTable[i].link();
 				}
@@ -61,13 +79,19 @@ public class Router extends SimEnt{
 	
 	public void recv(SimEnt source, Event event)
 	{
+        System.out.println("Router Recieved"+event.getClass().getName());
 		if (event instanceof Message)
 		{
-			//System.out.println("Router handles packet with seq: " + ((Message) event).seq()+" from node: "+((Message) event).source().networkId()+"." + ((Message) event).source().nodeId() );
-			SimEnt sendNext = getInterface(((Message) event).destination().networkId());
-			//System.out.println("Router sends to node: " + ((Message) event).destination().networkId()+"." + ((Message) event).destination().nodeId());
+            SimEnt sendNext = getInterface(((Message) event).destination().networkId());
+
 			send (sendNext, event, _now);
 	
-		}	
+		} else if(event instanceof RouterSolicitationMessage){
+            System.out.println("Solicitation RCV");
+            RouterAdvertismentMessage msg = new RouterAdvertismentMessage(this.getAddr(), ((RouterSolicitationMessage) event).source());
+            SimEnt sendNext = getInterface(((RouterSolicitationMessage) event).source().networkId());
+            send (sendNext, msg, _now);
+        }
+        //else if (event instanceof RouterSolicitaiton) send routeradvertisment
 	}
 }
