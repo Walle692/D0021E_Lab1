@@ -141,6 +141,16 @@ public class Node extends SimEnt {
 
 //**********************************************************************************
 
+    private void sendBindingUpdate(){
+        //Not implemented
+    }
+
+    private void receiveBindingUpdate(){
+        //Not implemented
+    }
+
+    //**********************************************************************************
+
     // This method is called upon that an event destined for this node triggers.
 
     public void recv(SimEnt src, Event ev)
