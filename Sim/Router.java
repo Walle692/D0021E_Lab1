@@ -139,11 +139,11 @@ public class Router extends SimEnt{
 	
 	public void recv(SimEnt source, Event event)
 	{
-        System.out.println("Router received event: " + event + " from: " + source + " in " + this);
+        //System.out.println("Router received event: " + event + " from: " + source + " in " + this);
 		if (event instanceof Message)
 		{
             SimEnt sendNext = getInterface(((Message) event).destination().networkId());
-            System.out.println("Routing Message to: " + sendNext);
+            //System.out.println("Routing Message to: " + sendNext);
             send(sendNext, event, _now);
 
 		} else if(event instanceof RouterSolicitationMessage){
@@ -151,10 +151,10 @@ public class Router extends SimEnt{
             RouterAdvertismentMessage msg = new RouterAdvertismentMessage(this.getAddr(), ((RouterSolicitationMessage) event).source());
             SimEnt sendNext = getInterface(((RouterSolicitationMessage) event).source().networkId());
             addPrefixEntry(((RouterSolicitationMessage) event).source());
-            System.out.println("Sending Router Advertisement to: " + sendNext.getClass().getSimpleName());
+            //System.out.println("Sending Router Advertisement to: " + sendNext.getClass().getSimpleName());
             send(sendNext, msg, _now);
         } else if(event instanceof RouterAdvertismentMessage){
-            System.out.println("Advertisment RCV at Router");
+            System.out.println("Advertisment RCV");
             addPrefixEntry(((RouterAdvertismentMessage) event).source());
         }
 	}

@@ -14,7 +14,6 @@ public class Message implements Event{
 		_source = from;
 		_destination = to;
 		_seq=seq;
-        System.out.println("new Message created from "+from.networkId()+"."+from.nodeId()+" to "+to.networkId()+"."+to.nodeId()+" seq: "+seq+this);
 	}
 	
 	public NetworkAddr source()
