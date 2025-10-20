@@ -40,13 +40,14 @@ public class Run {
         //connecting the networks
         Link inbetweenLink = new Link();
 
-
+        homerouter.connectInterface(2, inbetweenLink, foreignRouter);
+        foreignRouter.connectInterface(2, inbetweenLink, homerouter);
 
 
 		// Generate some traffic
-        stableNode.StartSending(11, 2, 100, 1, 0);
 
 
+        stableNode.StartSending(21, 3, 100, 1, 0);
 
 		// Start the simulation engine and of we go!
 		Thread t=new Thread(SimEngine.instance());
@@ -56,9 +57,10 @@ public class Run {
 		try
 		{
             t.sleep(5);
-            foreignRouter.connectInterface(2, inbetweenLink, homerouter);
+            //foreignRouter.connectInterface(2, inbetweenLink, homerouter);
             t.sleep(5);
-            homerouter.connectInterface(2, inbetweenLink, foreignRouter);
+
+            //homerouter.connectInterface(2, inbetweenLink, foreignRouter);
             //t.sleep(30);
             //homerouter.connectInterface(2, moverLink, moverNode);
             t.join(3000);

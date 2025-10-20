@@ -4,6 +4,8 @@ package Sim;
 
 public class Router extends SimEnt{
 
+    // used to store the prefix table for routing
+    private RouteTableEntry [] _prefixTable;
 	private RouteTableEntry [] _routingTable;
 	private int _interfaces;
 	private int _now=0;
@@ -12,6 +14,7 @@ public class Router extends SimEnt{
 	
 	Router(int interfaces, int network, int routerID)
 	{
+        _prefixTable = new RouteTableEntry[interfaces];
 		_routingTable = new RouteTableEntry[interfaces];
 		_interfaces=interfaces;
         _id = new NetworkAddr(network, routerID);
@@ -44,16 +47,16 @@ public class Router extends SimEnt{
 			System.out.println("Trying to connect to port not in router");
 		
 		((Link) link).setConnector(this);
-        if (_routingTable[interfaceNumber].link() != null && _routingTable[interfaceNumber].link() instanceof Link) {
-            if (((Link) _routingTable[interfaceNumber].link()).isFullyConnected()) {
 
-                sendRouterSolicitation(interfaceNumber);
-            }
+        //check if link is fully connected before sending RS
+        if(_routingTable[interfaceNumber].link() instanceof Link && ((Link) _routingTable[interfaceNumber].link()).isFullyConnected()){
+            sendRouterSolicitation(interfaceNumber);
         }
 
 	}
 
     private void sendRouterSolicitation(int interfaceNumber){
+        //both statements send routersolicitation but due to different node types need to be handled differently
         if (_routingTable[interfaceNumber].node() instanceof Node) {
             RouterSolicitationMessage rsm = new RouterSolicitationMessage(
                     this.getAddr(),
@@ -61,17 +64,13 @@ public class Router extends SimEnt{
             );
             send(_routingTable[interfaceNumber].link(), rsm, _now);
         } else {
-            System.out.println("Error: Node is not an instance of Node.");
+            System.out.println("Router connected to another Router, sending RS");
             RouterSolicitationMessage rsm = new RouterSolicitationMessage(
                     this.getAddr(),
                     ((Router) _routingTable[interfaceNumber].node()).getAddr()
             );
             send(_routingTable[interfaceNumber].link(), rsm, _now);
         }
-
-        //System.out.println("Solicitation Sent");
-        //RouterSolicitationMessage rsm = new RouterSolicitationMessage(this.getAddr(), (Node) _routingTable[interfaceNumber].node().getAddr());
-        //send (_routingTable[interfaceNumber].link(), rsm, _now);
     }
 
 
@@ -85,34 +84,78 @@ public class Router extends SimEnt{
 		for(int i=0; i<_interfaces; i++)
 			if (_routingTable[i] != null)
 			{
-                if (_routingTable[i].node().getClass() == Router.class){
-                    routerInterface = _routingTable[i].link();
-                } else if (((Node) _routingTable[i].node()).getAddr().networkId() == networkAddress)
+                //check if node is a router
+                if (_routingTable[i].node().getClass() == Router.class) {
+                    Router tempRouter = (Router) _routingTable[i].node();
+                    int tempAddr = tempRouter.getAddr().networkId();
+                    if (tempAddr == networkAddress) {
+                        routerInterface = _routingTable[i].link();
+                    }
+                }
+                //checks if node is a normal node and connected to this router
+                else if (((Node) _routingTable[i].node()).getAddr().networkId() == networkAddress)
 				{
 					routerInterface = _routingTable[i].link();
 				}
+                //checks if node is normal and not connected to this router but has prefix to router we know.
+                else if (_prefixTable[i] != null){
+                    Router temp = (Router) _prefixTable[i].node();
+                    int prefixNetwork = temp.getAddr().networkId();
+                    int destPrefix = networkAddress / 10; // Assuming a fixed prefix length of 10 for simplicity
+                    if (prefixNetwork == destPrefix) {
+                        routerInterface = _routingTable[i].link();
+                    }
+                }
 			}
+        //if no matching interface found, send to first available interface might give eternal loop but at least something
+        if (routerInterface == null){
+            for(int i=0; i<_interfaces; i++){
+                if(_prefixTable[i] != null){
+                    routerInterface = _prefixTable[i].link();
+                }
+            }
+        }
 		return routerInterface;
 	}
-	
+
+    private void addPrefixEntry(NetworkAddr sourceAddr) {
+        //find which interface the advertisment came from
+        for (int i = 0; i < _interfaces; i++) {
+            if (_routingTable[i] != null){
+                if (_routingTable[i].node().getClass() == Router.class) {
+                    Router connectedRouter = (Router) _routingTable[i].node();
+                    //check if advertisment source matches connected router
+                    if (connectedRouter.getAddr().equals(sourceAddr)) {
+                        _prefixTable[i] = _routingTable[i];
+                    }
+                }
+            }
+        }
+
+    }
+
 	
 	// When messages are received at the router this method is called
 	
 	public void recv(SimEnt source, Event event)
 	{
-        System.out.println("Router Recieved"+event.getClass().getName());
+        System.out.println("Router received event: " + event + " from: " + source + " in " + this);
 		if (event instanceof Message)
 		{
             SimEnt sendNext = getInterface(((Message) event).destination().networkId());
+            System.out.println("Routing Message to: " + sendNext);
+            send(sendNext, event, _now);
 
-			send (sendNext, event, _now);
-	
 		} else if(event instanceof RouterSolicitationMessage){
             System.out.println("Solicitation RCV");
             RouterAdvertismentMessage msg = new RouterAdvertismentMessage(this.getAddr(), ((RouterSolicitationMessage) event).source());
             SimEnt sendNext = getInterface(((RouterSolicitationMessage) event).source().networkId());
-            send (sendNext, msg, _now);
+            addPrefixEntry(((RouterSolicitationMessage) event).source());
+            System.out.println("Sending Router Advertisement to: " + sendNext.getClass().getSimpleName());
+            send(sendNext, msg, _now);
+        } else if(event instanceof RouterAdvertismentMessage){
+            System.out.println("Advertisment RCV at Router");
+            addPrefixEntry(((RouterAdvertismentMessage) event).source());
         }
-        //else if (event instanceof RouterSolicitaiton) send routeradvertisment
 	}
 }

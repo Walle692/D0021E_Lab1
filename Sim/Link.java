@@ -25,7 +25,7 @@ public class Link extends SimEnt{
 
 	// Method to check if the link is connected on both ends
 	public boolean isFullyConnected() {
-		return _connectorA != null && _connectorB != null;
+		return (_connectorA != null && _connectorB != null);
 	}
 
 	// Called when a message enters the link
