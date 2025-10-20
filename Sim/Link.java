@@ -23,21 +23,25 @@ public class Link extends SimEnt{
 			_connectorB=connectTo;
 	}
 
+	// Method to check if the link is connected on both ends
+	public boolean isFullyConnected() {
+		return (_connectorA != null && _connectorB != null);
+	}
+
 	// Called when a message enters the link
 	
 	public void recv(SimEnt src, Event ev)
 	{
-		if (ev instanceof Message)
-		{
-			//System.out.println("Link recv msg, passes it through");
-			if (src == _connectorA)
-			{
-				send(_connectorB, ev, _now);
-			}
-			else
-			{
-				send(_connectorA, ev, _now);
-			}
+		if (!isFullyConnected()) {
+			System.err.println("Error: Link is not fully connected. Event cannot be forwarded.");
+			return;
 		}
-	}	
+
+		// Forward the event to the other connector
+		if (src == _connectorA) {
+			send(_connectorB, ev, _now);
+		} else {
+			send(_connectorA, ev, _now);
+		}
+	}
 }
