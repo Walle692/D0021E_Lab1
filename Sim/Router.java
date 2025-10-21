@@ -25,12 +25,17 @@ public class Router extends SimEnt{
 		{
             for (int i=0;i<_interfaces;i++){
                 if(_routingTable[i]!=null && _routingTable[i].node().equals(node)){
-                    System.out.println("Router already connected to "+_routingTable[i].node()+" Removing Table entry");
+
+					NetworkAddr printOut = ((Node) _routingTable[i].node()).getAddr();
+                    System.out.println("Router already connected to "+printOut.networkId() +"." + printOut.nodeId()+" Removing Table entry");
                     _routingTable[i] = null;
                 }
             }
 			_routingTable[interfaceNumber] = new RouteTableEntry(link, node);
-            System.out.println("Router connected to "+_routingTable[interfaceNumber].node()+" Adding Table entry on interface "+interfaceNumber);
+
+			// Gives network + node instead of hash
+			NetworkAddr printOut = ((Node)_routingTable[interfaceNumber].node()).getAddr();
+            System.out.println("Router connected to "+ printOut.networkId() + "." + printOut.nodeId()+" Adding Table entry on interface "+interfaceNumber);
 		}
 		else
 			System.out.println("Trying to connect to port not in router");

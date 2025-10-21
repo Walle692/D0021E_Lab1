@@ -15,7 +15,7 @@ public class Run {
         Link moverLink = new Link();
 
 		Node stableNode = new Node(1, 1);
-		Node moverNode = new Node(2, 2);
+		Node moverNode = new Node(3, 2);
 
 
 
@@ -35,7 +35,7 @@ public class Run {
 
 		
 		// Generate some traffic
-        stableNode.StartSending(2, 2, 100, 1, 0);
+        stableNode.StartSending(3, 2, 40, 1, 0);
 		
 		// Start the simulation engine and of we go!
 		Thread t=new Thread(SimEngine.instance());
