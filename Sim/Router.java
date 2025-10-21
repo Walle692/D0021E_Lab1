@@ -61,13 +61,23 @@ public class Router extends SimEnt{
 	
 	public void recv(SimEnt source, Event event)
 	{
-		if (event instanceof Message)
-		{
+		if (!(event instanceof  Message)) return;
+
+		Message m = (Message) event;
+		switch (m.getType()) {
+
+			case ROUTER_SOLICITATION:
+				return;
+
+			case ROUTER_ADVERTISEMENT:
+				return;
+
+			default:
 			//System.out.println("Router handles packet with seq: " + ((Message) event).seq()+" from node: "+((Message) event).source().networkId()+"." + ((Message) event).source().nodeId() );
 			SimEnt sendNext = getInterface(((Message) event).destination().networkId());
 			//System.out.println("Router sends to node: " + ((Message) event).destination().networkId()+"." + ((Message) event).destination().nodeId());
-			send (sendNext, event, _now);
-	
-		}	
+			send(sendNext, event, _now);
+
+		}
 	}
 }
