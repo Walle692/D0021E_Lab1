@@ -11,41 +11,52 @@ public class Run {
 		new java.io.File("poisson.csv").delete();
 		new java.io.File("uniform.csv").delete();
 
+		//Setting up the "home network"
 		Link stableLink = new Link();
-        Link moverLink = new Link();
+		Link moverLink = new Link();
 
-		Node stableNode = new Node(1, 1);
-		Node moverNode = new Node(3, 2);
+		Node stableNode = new Node(11, 1);
+		Node moverNode = new Node(12, 2);
+
+		Router homerouter = new Router(4);
+
+		homerouter.connectInterface(0, stableLink, stableNode);
+		homerouter.connectInterface(1, moverLink, moverNode);
+
+		stableNode.setPeer(stableLink);
+		moverNode.setPeer(moverLink);
 
 
+		//Setting up the "foreign network"
+		Link foreignLink = new Link();
+		Node foreignNode = new Node(21, 3);
 
-		//Connect links to hosts
-        stableNode.setPeer(stableLink);
-        moverNode.setPeer(moverLink);
+		foreignNode.setPeer(foreignLink);
 
-		// Creates as router and connect
-		// links to it. Information about 
-		// the host connected to the other
-		// side of the link is also provided
-		// Note. A switch is created in same way using the Switch class
-		Router routeNode = new Router(4);
+		Router foreignRouter = new Router(3);
 
-        routeNode.connectInterface(0, stableLink, stableNode);
-        routeNode.connectInterface(1, moverLink, moverNode);
+		foreignRouter.connectInterface(0, foreignLink, foreignNode);
 
-		
+		//connecting the networks
+		Link inbetweenLink = new Link();
+
+		homerouter.connectInterface(2, inbetweenLink, foreignRouter);
+		foreignRouter.connectInterface(2, inbetweenLink, homerouter);
+
+
 		// Generate some traffic
-        stableNode.StartSending(3, 2, 40, 1, 0);
-		
+
+
+		stableNode.StartSending(21, 3, 100, 1, 0);
+
 		// Start the simulation engine and of we go!
 		Thread t=new Thread(SimEngine.instance());
-	
+
 		t.start();
 
 		try
 		{
             t.sleep(30);
-            routeNode.connectInterface(2, moverLink, moverNode);
             t.join(3000);
 		}
 		catch (Exception e)

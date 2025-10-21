@@ -18,7 +18,8 @@ public class Router extends SimEnt{
 	
 	// This method connects links to the router and also informs the 
 	// router of the host connects to the other end of the link
-	
+
+
 	public void connectInterface(int interfaceNumber, SimEnt link, SimEnt node)
 	{
 		if (interfaceNumber<_interfaces)
@@ -33,9 +34,16 @@ public class Router extends SimEnt{
             }
 			_routingTable[interfaceNumber] = new RouteTableEntry(link, node);
 
-			// Gives network + node instead of hash
-			NetworkAddr printOut = ((Node)_routingTable[interfaceNumber].node()).getAddr();
-            System.out.println("Router connected to "+ printOut.networkId() + "." + printOut.nodeId()+" Adding Table entry on interface "+interfaceNumber);
+			//Print node connection or Router connection dependent on type
+			if(node instanceof Node) {
+				NetworkAddr printOut = ((Node) _routingTable[interfaceNumber].node()).getAddr();
+				System.out.println("Router connected to " + printOut.networkId() + "." + printOut.nodeId() + " Adding Table entry on interface " + interfaceNumber);
+			}
+			else{
+				Router printOut = (Router) _routingTable[interfaceNumber].node();
+				System.out.println("Router connected to other router with "+ printOut._interfaces +" interface(s). Adding Table entry on interface "+ interfaceNumber);
+			}
+
 		}
 		else
 			System.out.println("Trying to connect to port not in router");
@@ -53,7 +61,7 @@ public class Router extends SimEnt{
 		for(int i=0; i<_interfaces; i++)
 			if (_routingTable[i] != null)
 			{
-				if (((Node) _routingTable[i].node()).getAddr().networkId() == networkAddress)
+				if ( ( (Node) _routingTable[i].node() ).getAddr().networkId() == networkAddress)
 				{
 					routerInterface = _routingTable[i].link();
 				}
@@ -72,9 +80,15 @@ public class Router extends SimEnt{
 		switch (m.getType()) {
 
 			case ROUTER_SOLICITATION:
+                //Send router advertisement
+                Message sendRouterAdvertisement = new Message(m.destination(), m.source(), m.seq(), Message.MsgType.ROUTER_ADVERTISEMENT);
+
+
+
 				return;
 
 			case ROUTER_ADVERTISEMENT:
+                //Add stuff from the recived measage into the table?
 				return;
 
 			default:
