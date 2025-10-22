@@ -8,12 +8,15 @@ public class Router extends SimEnt{
 	private int _interfaces;
 	private int _now=0;
 
+    private int _networkId;
+
 	// When created, number of interfaces are defined
 	
-	Router(int interfaces)
+	Router(int networkId,int interfaces)
 	{
 		_routingTable = new RouteTableEntry[interfaces];
 		_interfaces=interfaces;
+        _networkId = networkId;
 	}
 	
 	// This method connects links to the router and also informs the 
@@ -41,7 +44,7 @@ public class Router extends SimEnt{
 			}
 			else{
 				Router printOut = (Router) _routingTable[interfaceNumber].node();
-				System.out.println("Router connected to other router with "+ printOut._interfaces +" interface(s). Adding Table entry on interface "+ interfaceNumber);
+				System.out.println("Router connected to other router with Network: "+ printOut._networkId +". Adding Table entry on interface "+ interfaceNumber);
 			}
 
 		}
@@ -55,18 +58,39 @@ public class Router extends SimEnt{
 	// the network number in the destination field of a messages. The link
 	// represents that network number is returned
 	
-	private SimEnt getInterface(int networkAddress)
+	private SimEnt getInterface(int networkAddress, int nodeId)
 	{
 		SimEnt routerInterface=null;
-		for(int i=0; i<_interfaces; i++)
-			if (_routingTable[i] != null)
-			{
-				if ( ( (Node) _routingTable[i].node() ).getAddr().networkId() == networkAddress)
-				{
+        for(int i=0; i<_interfaces; i++) {
+			if (_routingTable[i] == null) continue;
+
+			if (_routingTable[i].node() instanceof Node) {
+				NetworkAddr compare = ((Node) _routingTable[i].node()).getAddr();
+				if (compare.networkId() == networkAddress && compare.nodeId() == nodeId) {
 					routerInterface = _routingTable[i].link();
 				}
 			}
+			else{
+				Router tempRouter = (Router) _routingTable[i].node();
+				if (tempRouter._networkId == networkAddress) {
+					routerInterface = _routingTable[i].link();
+				}
+
+			}
+		}
+
+
 		return routerInterface;
+
+//		for(int i=0; i<_interfaces; i++)
+//			if (_routingTable[i] != null)
+//			{
+//				if ( ( (Node) _routingTable[i].node() ).getAddr().networkId() == networkAddress)
+//				{
+//					routerInterface = _routingTable[i].link();
+//				}
+//			}
+//		return routerInterface;
 	}
 	
 	
@@ -93,7 +117,10 @@ public class Router extends SimEnt{
 
 			default:
 			//System.out.println("Router handles packet with seq: " + ((Message) event).seq()+" from node: "+((Message) event).source().networkId()+"." + ((Message) event).source().nodeId() );
-			SimEnt sendNext = getInterface(((Message) event).destination().networkId());
+			SimEnt sendNext = getInterface(
+					((Message) event).destination().networkId(),
+					((Message) event).destination().nodeId()
+			);
 			//System.out.println("Router sends to node: " + ((Message) event).destination().networkId()+"." + ((Message) event).destination().nodeId());
 			send(sendNext, event, _now);
 
