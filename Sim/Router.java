@@ -2,9 +2,14 @@ package Sim;
 
 // This class implements a simple router
 
+import java.util.ArrayList;
+
 public class Router extends SimEnt{
 
 	private RouteTableEntry [] _routingTable;
+
+	private ArrayList<Integer> forwardTableMatch = new ArrayList<>();
+	private ArrayList<Link> forwardTableSend = new ArrayList<>();
 	private int _interfaces;
 	private int _now=0;
 
@@ -50,7 +55,13 @@ public class Router extends SimEnt{
 		}
 		else
 			System.out.println("Trying to connect to port not in router");
-		
+
+		//Brute force table for test
+		if(_interfaces == 10){
+			forwardTableMatch.add(30);
+			forwardTableSend.add((Link)this.getInterface(20, 3));
+		}
+
 		((Link) link).setConnector(this);
 	}
 
@@ -76,6 +87,15 @@ public class Router extends SimEnt{
 					routerInterface = _routingTable[i].link();
 				}
 
+			}
+		}
+		// This case will happen if the "ip adress" isn't a neighbor to this router
+		//In which case we will check what link to forward it to
+		if(routerInterface == null){
+			int currentIndex = 0;
+			for(int i: forwardTableMatch){
+				if(i == networkAddress) routerInterface = forwardTableSend.get(currentIndex);
+				currentIndex++;
 			}
 		}
 

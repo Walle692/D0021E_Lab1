@@ -18,7 +18,7 @@ public class Run {
 		Link aHost2Link = new Link();
 		Node aHost2 = new Node(10, 2);   // 10.2
 
-		Router routerA = new Router(10, 3); // (homeNet=10, ifCount=3)  // iface 0..2
+		Router routerA = new Router(10, 10); // (homeNet=10, ifCount=3)  // iface 0..2
 
 		routerA.connectInterface(0, aHost1Link, aHost1); // A-if0 ↔ A host1
 		routerA.connectInterface(1, aHost2Link, aHost2); // A-if1 ↔ A host2
@@ -66,7 +66,7 @@ public class Run {
 //		routerA.connectInterface(2, acBackboneLink, routerC); // A-if2 ↔ backbone to C
 //		routerC.connectInterface(2, acBackboneLink, routerA); // C-if2 ↔ backbone to A
 
-		aHost1.StartSending(20, 1, 10, 1, 0);  // to 20.1, count=10, interval=1, start=0
+		aHost1.StartSending(30, 1, 10, 1, 0);  // to 20.1, count=10, interval=1, start=0
 
 		Thread t=new Thread(SimEngine.instance());
 
