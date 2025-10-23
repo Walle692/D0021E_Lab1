@@ -103,15 +103,6 @@ public class Router extends SimEnt{
 
 		return routerInterface;
 
-//		for(int i=0; i<_interfaces; i++)
-//			if (_routingTable[i] != null)
-//			{
-//				if ( ( (Node) _routingTable[i].node() ).getAddr().networkId() == networkAddress)
-//				{
-//					routerInterface = _routingTable[i].link();
-//				}
-//			}
-//		return routerInterface;
 	}
 	
 	
@@ -163,23 +154,34 @@ public class Router extends SimEnt{
 				//
                 //Add stuff from the recived measage into the table?
 
+				//Is this RA for me?
 				if (m.destination().networkId() == _networkId){
 					this.forwardTableMatch.add(m.source().networkId());
 					this.forwardTableSend.add((Link) source);
 					return;
 				}
+				//Not for me -> do I know where to send it, if yes send it to that?
+				if (forwardTableMatch.contains(m.destination().networkId())){
+					SimEnt sendThis = getInterface(m.destination().networkId(),0);
+					send(sendThis, m, _now);
+					return;
+				}else {
+					System.out.println("Clueless");
+					this.RS();
+				}
+				//I have not seen this address before
 
 				//Continue Sending RA to all neighbor routers
-				if(m.updateTTL()<=0) return;
-				//S
-				for(int i=0; i<_interfaces; i++) {
-					if (_routingTable[i] == null) continue;
-					if (_routingTable[i].node() instanceof Router) {
-						if(_routingTable[i].link() != source) {
-							send(_routingTable[i].link(), m, _now);
-						}
-					}
-				}
+//				if(m.updateTTL()<=0) return;
+//				//S
+//				for(int i=0; i<_interfaces; i++) {
+//					if (_routingTable[i] == null) continue;
+//					if (_routingTable[i].node() instanceof Router) {
+//						if(_routingTable[i].link() != source) {
+//							send(_routingTable[i].link(), m, _now);
+//						}
+//					}
+//				}
 
 
 				return;
