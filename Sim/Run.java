@@ -66,7 +66,10 @@ public class Run {
 //		routerA.connectInterface(2, acBackboneLink, routerC); // A-if2 ↔ backbone to C
 //		routerC.connectInterface(2, acBackboneLink, routerA); // C-if2 ↔ backbone to A
 
-		aHost1.StartSending(30, 1, 10, 1, 0);  // to 20.1, count=10, interval=1, start=0
+		routerA.RS();
+		routerC.RS();
+
+		cHost1.StartSending(10, 1, 10, 1, 0);  // to 20.1, count=10, interval=1, start=0
 
 		Thread t=new Thread(SimEngine.instance());
 

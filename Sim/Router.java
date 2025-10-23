@@ -57,7 +57,7 @@ public class Router extends SimEnt{
 			System.out.println("Trying to connect to port not in router");
 
 		//Brute force table for test
-		if(_interfaces == 10){
+		if(_interfaces == 13){
 			forwardTableMatch.add(30);
 			forwardTableSend.add((Link)this.getInterface(20, 3));
 		}
@@ -98,6 +98,7 @@ public class Router extends SimEnt{
 				currentIndex++;
 			}
 		}
+		// Upon no match maybe send RS
 
 
 		return routerInterface;
@@ -115,6 +116,17 @@ public class Router extends SimEnt{
 	
 	
 	// When messages are received at the router this method is called
+
+	public void RS(){
+		NetworkAddr thisRouterAddress = new NetworkAddr(_networkId,0);
+		Message m = new Message(thisRouterAddress, null, 0, Message.MsgType.ROUTER_SOLICITATION, 10);
+		for(int i=0; i<_interfaces; i++) {
+			if (_routingTable[i] == null) continue;
+			if (_routingTable[i].node() instanceof Router) {
+				send(_routingTable[i].link(), m, _now);
+			}
+		}
+	}
 	
 	public void recv(SimEnt source, Event event)
 	{
@@ -125,14 +137,51 @@ public class Router extends SimEnt{
 
 			case ROUTER_SOLICITATION:
                 //Send router advertisement
-                Message sendRouterAdvertisement = new Message(m.destination(), m.source(), m.seq(), Message.MsgType.ROUTER_ADVERTISEMENT);
+				NetworkAddr thisRouterAddress = new NetworkAddr(_networkId,0);
+                //Message sendRouterAdvertisement = new Message(thisRouterAddress, m.source(), m.seq(), Message.MsgType.ROUTER_ADVERTISEMENT, 10);
 
+				Message sendRouterAdvertisement =
+						new Message(thisRouterAddress, m.source(), m.seq(),
+								Message.MsgType.ROUTER_ADVERTISEMENT, 10);
+				send(source, sendRouterAdvertisement, _now);
 
+				//Continue Sending RS to all neighbor routers
+				if(m.updateTTL()<=0) return;
+				//S
+				for(int i=0; i<_interfaces; i++) {
+					if (_routingTable[i] == null) continue;
+					if (_routingTable[i].node() instanceof Router) {
+						if(_routingTable[i].link() != source) {
+							send(_routingTable[i].link(), m, _now);
+						}
+					}
+				}
 
 				return;
 
 			case ROUTER_ADVERTISEMENT:
+				//
                 //Add stuff from the recived measage into the table?
+
+				if (m.destination().networkId() == _networkId){
+					this.forwardTableMatch.add(m.source().networkId());
+					this.forwardTableSend.add((Link) source);
+					return;
+				}
+
+				//Continue Sending RA to all neighbor routers
+				if(m.updateTTL()<=0) return;
+				//S
+				for(int i=0; i<_interfaces; i++) {
+					if (_routingTable[i] == null) continue;
+					if (_routingTable[i].node() instanceof Router) {
+						if(_routingTable[i].link() != source) {
+							send(_routingTable[i].link(), m, _now);
+						}
+					}
+				}
+
+
 				return;
 
 			default:
@@ -142,6 +191,7 @@ public class Router extends SimEnt{
 					((Message) event).destination().nodeId()
 			);
 			//System.out.println("Router sends to node: " + ((Message) event).destination().networkId()+"." + ((Message) event).destination().nodeId());
+				if (sendNext == null) return;
 			send(sendNext, event, _now);
 
 		}

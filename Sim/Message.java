@@ -14,20 +14,29 @@ public class Message implements Event{
 	private int _seq=0;
 	private MsgType _type;
 
+	private int _TTL;
+
 	Message(NetworkAddr from, NetworkAddr to, int seq) {
-		this(from, to, seq, MsgType.PING);
+		this(from, to, seq, MsgType.PING, 10);
 	}
 	
-	Message (NetworkAddr from, NetworkAddr to, int seq, MsgType type)
+	Message (NetworkAddr from, NetworkAddr to, int seq, MsgType type, int TTL)
 	{
 		_source = from;
 		_destination = to;
 		_seq=seq;
 		_type = type;
+		_TTL = TTL;
 	}
 
 	public MsgType getType() {
 		return _type;
+	}
+
+	public int updateTTL(){
+		_TTL--;
+		System.out.println(_TTL);
+		return _TTL;
 	}
 
 	public NetworkAddr source()
