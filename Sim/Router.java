@@ -56,13 +56,9 @@ public class Router extends SimEnt{
 		else
 			System.out.println("Trying to connect to port not in router");
 
-		//Brute force table for test
-		if(_interfaces == 13){
-			forwardTableMatch.add(30);
-			forwardTableSend.add((Link)this.getInterface(20, 3));
-		}
 
 		((Link) link).setConnector(this);
+		this.RS();
 	}
 
 	// This method searches for an entry in the routing table that matches
@@ -110,7 +106,7 @@ public class Router extends SimEnt{
 
 	public void RS(){
 		NetworkAddr thisRouterAddress = new NetworkAddr(_networkId,0);
-		Message m = new Message(thisRouterAddress, null, 0, Message.MsgType.ROUTER_SOLICITATION, 10);
+		Message m = new Message(thisRouterAddress, null, 0, Message.MsgType.ROUTER_SOLICITATION, 100);
 		for(int i=0; i<_interfaces; i++) {
 			if (_routingTable[i] == null) continue;
 			if (_routingTable[i].node() instanceof Router) {
@@ -133,7 +129,7 @@ public class Router extends SimEnt{
 
 				Message sendRouterAdvertisement =
 						new Message(thisRouterAddress, m.source(), m.seq(),
-								Message.MsgType.ROUTER_ADVERTISEMENT, 10);
+								Message.MsgType.ROUTER_ADVERTISEMENT, 100);
 				send(source, sendRouterAdvertisement, _now);
 
 				//Continue Sending RS to all neighbor routers
@@ -156,8 +152,15 @@ public class Router extends SimEnt{
 
 				//Is this RA for me?
 				if (m.destination().networkId() == _networkId){
+					if (forwardTableMatch.contains(m.source().networkId())) return;
+					//System.out.println("Router " + _networkId + " CONSUMED NOW");
+
 					this.forwardTableMatch.add(m.source().networkId());
 					this.forwardTableSend.add((Link) source);
+					//System.out.println(_networkId + "Router conatins");
+					for(int i : forwardTableMatch){
+						//System.out.println(i);
+					}
 					return;
 				}
 				//Not for me -> do I know where to send it, if yes send it to that?
@@ -166,8 +169,9 @@ public class Router extends SimEnt{
 					send(sendThis, m, _now);
 					return;
 				}else {
-					System.out.println("Clueless");
+					//System.out.println("Clueless");
 					this.RS();
+
 				}
 				//I have not seen this address before
 

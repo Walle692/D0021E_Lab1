@@ -35,7 +35,7 @@ public class Message implements Event{
 
 	public int updateTTL(){
 		_TTL--;
-		System.out.println(_TTL);
+		//System.out.println(_TTL);
 		return _TTL;
 	}
 

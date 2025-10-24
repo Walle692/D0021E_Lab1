@@ -90,21 +90,49 @@ public class Run {
 		}
 
 		// === Kick off discovery (use whichever routers you want) ===
-		routerA.RS();
-		routerB.RS();
-		routerC.RS();
-		routerD.RS();
-		if (LOOP) routerE.RS();
+
+		//routerA.RS();
+//		routerB.RS();
+//		routerC.RS();
+//		routerD.RS();
+//		routerA.RS();
+
+		//if (LOOP) routerE.RS();
 
 		// === Traffic tests ===
 		// C host → B host
-		aHost1.StartSending(50, 1, 10, 1, 0);  // to 20.1
 
-		// D host → A host (across C and B)
-		//dHost1.StartSending(10, 1, 5, 1, 0);   // to 10.1
+		// From A:10.1
+//		aHost1.StartSending(10, 2, 2, 1, 0);  // 10.1 -> 10.2
+//		aHost1.StartSending(20, 1, 2, 1, 0);  // 10.1 -> 20.1
+//		aHost1.StartSending(30, 1, 2, 1, 0);  // 10.1 -> 30.1
+		aHost1.StartSending(10, 1, 2, 1, 0);  // 10.1 -> 40.1
 
-		// Optional: A host → D host
-		// aHost1.StartSending(40, 1, 5, 1, 0);
+// From A:10.2
+//		aHost2.StartSending(10, 1, 2, 1, 0);  // 10.2 -> 10.1
+//		aHost2.StartSending(20, 1, 2, 1, 0);  // 10.2 -> 20.1
+//		aHost2.StartSending(30, 1, 2, 1, 0);  // 10.2 -> 30.1
+		aHost2.StartSending(10, 1, 2, 1, 0);  // 10.2 -> 40.1
+
+// From B:20.1
+//		bHost1.StartSending(10, 1, 2, 1, 0);  // 20.1 -> 10.1
+//		bHost1.StartSending(10, 2, 2, 1, 0);  // 20.1 -> 10.2
+//		bHost1.StartSending(30, 1, 2, 1, 0);  // 20.1 -> 30.1
+		bHost1.StartSending(10, 1, 2, 1, 0);  // 20.1 -> 40.1
+
+// From C:30.1
+//		cHost1.StartSending(10, 1, 2, 1, 0);  // 30.1 -> 10.1
+//		cHost1.StartSending(10, 2, 2, 1, 0);  // 30.1 -> 10.2
+//		cHost1.StartSending(20, 1, 2, 1, 0);  // 30.1 -> 20.1
+		cHost1.StartSending(10, 1, 2, 1, 0);  // 30.1 -> 40.1
+
+// From D:40.1
+//		dHost1.StartSending(10, 1, 2, 1, 0);  // 40.1 -> 10.1
+//		dHost1.StartSending(10, 2, 2, 1, 0);  // 40.1 -> 10.2
+//		dHost1.StartSending(20, 1, 2, 1, 0);  // 40.1 -> 20.1
+		dHost1.StartSending(10, 1, 2, 1, 0);  // 40.1 -> 30.1
+
+
 
 		Thread t = new Thread(SimEngine.instance());
 		t.start();
