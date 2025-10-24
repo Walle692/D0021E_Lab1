@@ -15,16 +15,19 @@ public class Node extends SimEnt {
     private SimEnt _peer;
     private int _sentmsg=0;
     private int _seq = 0;
+    private int _homeAgent;
 
 
 
     Random r = new Random(3);
 
-    public Node (int network, int node)
+    public Node (int network, int node, int homeAgent)
     {
         super();
         _id = new NetworkAddr(network, node);
+        _homeAgent = homeAgent;
     }
+
 
 
     // Sets the peer to communicate with. This node is single homed
@@ -67,6 +70,10 @@ public class Node extends SimEnt {
         _toHost = node;
         _seq = startSeq;
         send(this, new TimerEvent(),0);
+    }
+
+    public void updateNetworkaddr(int network){
+        this._id = new NetworkAddr(network, _id.nodeId());
     }
 
     public void StartSendingDelay(int network, int node, int number, int timeInterval, int startSeq, double delay)
@@ -139,6 +146,12 @@ public class Node extends SimEnt {
 
     }
 
+    public void sendBU(){
+        send(_peer, new Message(_id, new NetworkAddr(_homeAgent, 0),_seq, Message.MsgType.BINDING_UPDATE, 2),0);
+        System.out.println("Node "+_id.networkId()+ "." + _id.nodeId() +" sent BU with seq: "+_seq + " at time "+SimEngine.getTime());
+        _seq++;
+    }
+
 //**********************************************************************************
 
     // This method is called upon that an event destined for this node triggers.
@@ -167,8 +180,15 @@ public class Node extends SimEnt {
                 _seq++;
             }
         }
+
         if (ev instanceof Message)
         {
+
+            Message m = (Message) ev;
+            if(m.getType() == Message.MsgType.BINDING_ACKNOWLEDGEMENT){
+                System.out.println("Node "+_id.networkId()+ "." + _id.nodeId() +" received BA with seq: "+m.seq() + " at time "+SimEngine.getTime());
+                return;
+            }
 
             try {
                 BufferedWriter writer = new BufferedWriter(new FileWriter("out.csv", true));
@@ -178,7 +198,7 @@ public class Node extends SimEnt {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-            System.out.println("Node "+_id.networkId()+ "." + _id.nodeId() +" receives message with seq: "+((Message) ev).seq() + " at time "+SimEngine.getTime());
+            System.out.println("Node "+_id.networkId()+ "." + _id.nodeId() +" receives message with seq: "+((Message) ev).seq() + " at time "+SimEngine.getTime() + " from "+((Message) ev).source().networkId()+ "." + ((Message) ev).source().nodeId());
 
         }
     }

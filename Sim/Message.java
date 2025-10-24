@@ -7,7 +7,7 @@ package Sim;
 
 public class Message implements Event{
 
-	enum MsgType{PING, ROUTER_SOLICITATION, ROUTER_ADVERTISEMENT}
+	enum MsgType{PING, ROUTER_SOLICITATION, ROUTER_ADVERTISEMENT, BINDING_UPDATE, BINDING_ACKNOWLEDGEMENT}
 
 	private NetworkAddr _source;
 	private NetworkAddr _destination;

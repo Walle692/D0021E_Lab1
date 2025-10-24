@@ -15,10 +15,10 @@ public class Run {
 
 		// === Network A (10.x) ===
 		Link aHost1Link = new Link();
-		Node aHost1 = new Node(10, 1);   // 10.1
+		Node aHost1 = new Node(10, 1, 10);   // 10.1
 
 		Link aHost2Link = new Link();
-		Node aHost2 = new Node(10, 2);   // 10.2
+		Node aHost2 = new Node(10, 2, 10);   // 10.2
 
 		Router routerA = new Router(10, 10); // plenty of ifaces
 
@@ -29,7 +29,7 @@ public class Run {
 
 		// === Network B (20.x) ===
 		Link bHost1Link = new Link();
-		Node bHost1 = new Node(20, 1);   // 20.1
+		Node bHost1 = new Node(20, 3,20);   // 20.1
 		bHost1.setPeer(bHost1Link);
 
 		Router routerB = new Router(20, 4); // B-if0..3
@@ -42,7 +42,7 @@ public class Run {
 
 		// === Network C (30.x) ===
 		Link cHost1Link = new Link();
-		Node cHost1 = new Node(30, 1);   // 30.1
+		Node cHost1 = new Node(30, 4, 30);   // 30.1
 		Router routerC = new Router(30, 4); // C-if0..3 (needs extra iface for E)
 		routerC.connectInterface(0, cHost1Link, cHost1); // C-if0 ↔ C host1
 		cHost1.setPeer(cHost1Link);
@@ -54,7 +54,7 @@ public class Run {
 
 		// === Network D (40.x) ===
 		Link dHost1Link = new Link();
-		Node dHost1 = new Node(40, 1);   // 40.1
+		Node dHost1 = new Node(40, 5, 40);   // 40.1
 		dHost1.setPeer(dHost1Link);
 
 		Router routerD = new Router(40, 4); // D-if0..3
@@ -72,7 +72,7 @@ public class Run {
 		if (LOOP) {
 			// Router E (50.x) + optional host
 			eHost1Link = new Link();
-			eHost1 = new Node(50, 1); // 50.1
+			eHost1 = new Node(50, 6, 50); // 50.1
 			eHost1.setPeer(eHost1Link);
 
 			routerE = new Router(50, 3); // E-if0..2

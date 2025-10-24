@@ -26,16 +26,16 @@ public class runBig {
         Router rJ = new Router(100,10);
 
         // One host per network: <net>.1  (iface 0 reserved for local host)
-        Link aH = new Link(); Node aHost1 = new Node(10, 1); rA.connectInterface(0, aH, aHost1); aHost1.setPeer(aH);
-        Link bH = new Link(); Node bHost1 = new Node(20, 1); rB.connectInterface(0, bH, bHost1); bHost1.setPeer(bH);
-        Link cH = new Link(); Node cHost1 = new Node(30, 1); rC.connectInterface(0, cH, cHost1); cHost1.setPeer(cH);
-        Link dH = new Link(); Node dHost1 = new Node(40, 1); rD.connectInterface(0, dH, dHost1); dHost1.setPeer(dH);
-        Link eH = new Link(); Node eHost1 = new Node(50, 1); rE.connectInterface(0, eH, eHost1); eHost1.setPeer(eH);
-        Link fH = new Link(); Node fHost1 = new Node(60, 1); rF.connectInterface(0, fH, fHost1); fHost1.setPeer(fH);
-        Link gH = new Link(); Node gHost1 = new Node(70, 1); rG.connectInterface(0, gH, gHost1); gHost1.setPeer(gH);
-        Link hH = new Link(); Node hHost1 = new Node(80, 1); rH.connectInterface(0, hH, hHost1); hHost1.setPeer(hH);
-        Link iH = new Link(); Node iHost1 = new Node(90, 1); rI.connectInterface(0, iH, iHost1); iHost1.setPeer(iH);
-        Link jH = new Link(); Node jHost1 = new Node(100,1); rJ.connectInterface(0, jH, jHost1); jHost1.setPeer(jH);
+        Link aH = new Link(); Node aHost1 = new Node(10, 1, 10); rA.connectInterface(0, aH, aHost1); aHost1.setPeer(aH);
+        Link bH = new Link(); Node bHost1 = new Node(20, 2, 20); rB.connectInterface(0, bH, bHost1); bHost1.setPeer(bH);
+        Link cH = new Link(); Node cHost1 = new Node(30, 3, 30); rC.connectInterface(0, cH, cHost1); cHost1.setPeer(cH);
+        Link dH = new Link(); Node dHost1 = new Node(40, 4, 40); rD.connectInterface(0, dH, dHost1); dHost1.setPeer(dH);
+        Link eH = new Link(); Node eHost1 = new Node(50, 5, 50); rE.connectInterface(0, eH, eHost1); eHost1.setPeer(eH);
+        Link fH = new Link(); Node fHost1 = new Node(60, 6, 60); rF.connectInterface(0, fH, fHost1); fHost1.setPeer(fH);
+        Link gH = new Link(); Node gHost1 = new Node(70, 7, 70); rG.connectInterface(0, gH, gHost1); gHost1.setPeer(gH);
+        Link hH = new Link(); Node hHost1 = new Node(80, 8, 80); rH.connectInterface(0, hH, hHost1); hHost1.setPeer(hH);
+        Link iH = new Link(); Node iHost1 = new Node(90, 9, 90); rI.connectInterface(0, iH, iHost1); iHost1.setPeer(iH);
+        Link jH = new Link(); Node jHost1 = new Node(100,10, 100); rJ.connectInterface(0, jH, jHost1); jHost1.setPeer(jH);
 
         // ========= Inter-router links (first big topology) =========
         // Keep exactly one link per router-pair (your Router.connectInterface duplicate check doesn’t like re-pairs)
@@ -93,6 +93,10 @@ public class runBig {
         t.start();
         try {
             t.sleep(30);
+            rA.disconnectInterface(0); // disconnect A:10.1
+            rB.connectInterface(2, aH, aHost1); // reconnect A:10.1 to B:20.2
+            aHost1.updateNetworkaddr(20); //update aHost1's network address to reflect new network
+            aHost1.sendBU(); //send binding update to home agent
             t.join(3000);
         } catch (Exception e) {
             System.out.println("The motor seems to have a problem, time for service?");
