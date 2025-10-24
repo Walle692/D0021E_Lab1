@@ -17,6 +17,10 @@ public class Node extends SimEnt {
     private int _seq = 0;
 
 
+    //binding table for when HA
+    private BindingTableEntry[] _bindingTable = new BindingTableEntry[10];
+
+
 
     Random r = new Random(3);
 
@@ -140,11 +144,60 @@ public class Node extends SimEnt {
     }
 
 //**********************************************************************************
+    private void sendBindingAcknowledgement(){
+        //Not implemented
+    }
+
+    private void sendBindingUpdate(){
+        //Not implemented
+    }
+
+    private void receiveBindingUpdate(Event ev){
+        BindingUpdate bu = (BindingUpdate) ev;
+        NetworkAddr careOfAddress = bu.source();
+        NetworkAddr homeAddress = bu.get_hoa();
+        int lifetime = bu.get_lifetime();
+
+        // Validate inputs
+        if (homeAddress == null || careOfAddress == null) {
+            System.err.println("Error: BindingUpdate contains null addresses.");
+            return;
+        }
+
+        // Check if entry already exists
+        for (int i = 0; i < _bindingTable.length; i++){
+            if (_bindingTable[i] != null && _bindingTable[i].get_hoa().equals(homeAddress)) {
+                // Update existing entry
+                _bindingTable[i].setCareOfAddress(careOfAddress);
+                _bindingTable[i].setLifetime(lifetime);
+                System.out.println("Updated binding table entry for: " + homeAddress);
+                return;
+            }
+        }
+
+        // Add new entry
+        for (int i = 0; i < _bindingTable.length; i++){
+            if (_bindingTable[i] == null){
+                _bindingTable[i] = new BindingTableEntry(homeAddress, careOfAddress, lifetime);
+                System.out.println("Added new binding table entry for: " + homeAddress);
+                return;
+            }
+        }
+
+        // Handle full table
+        System.err.println("Binding table full, cannot add new entry for: " + homeAddress);
+    }
+
+    //**********************************************************************************
 
     // This method is called upon that an event destined for this node triggers.
 
     public void recv(SimEnt src, Event ev)
     {
+        if (ev instanceof BindingUpdate){
+            System.out.println("recieved BU");
+            receiveBindingUpdate(ev);
+        }
         if (ev instanceof TimerEvent)
         {
             if (_stopSendingAfter > _sentmsg)

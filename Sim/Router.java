@@ -6,23 +6,29 @@ import java.util.ArrayList;
 
 public class Router extends SimEnt{
 
+    // used to store the prefix table for routing
+    private RouteTableEntry [] _prefixTable;
 	private RouteTableEntry [] _routingTable;
 
 	private ArrayList<Integer> forwardTableMatch = new ArrayList<>();
 	private ArrayList<Link> forwardTableSend = new ArrayList<>();
 	private int _interfaces;
 	private int _now=0;
-
-    private int _networkId;
-
+    private NetworkAddr _id;
 	// When created, number of interfaces are defined
 	
-	Router(int networkId,int interfaces)
+	Router(int interfaces, int network, int routerID)
 	{
+        _prefixTable = new RouteTableEntry[interfaces];
 		_routingTable = new RouteTableEntry[interfaces];
 		_interfaces=interfaces;
-        _networkId = networkId;
+        _id = new NetworkAddr(network, routerID);
 	}
+
+    public NetworkAddr getAddr()
+    {
+        return _id;
+    }
 	
 	// This method connects links to the router and also informs the 
 	// router of the host connects to the other end of the link
@@ -41,16 +47,8 @@ public class Router extends SimEnt{
                 }
             }
 			_routingTable[interfaceNumber] = new RouteTableEntry(link, node);
-
-			//Print node connection or Router connection dependent on type
-			if(node instanceof Node) {
-				NetworkAddr printOut = ((Node) _routingTable[interfaceNumber].node()).getAddr();
-				System.out.println("Router connected to " + printOut.networkId() + "." + printOut.nodeId() + " Adding Table entry on interface " + interfaceNumber);
-			}
-			else{
-				Router printOut = (Router) _routingTable[interfaceNumber].node();
-				System.out.println("Router connected to other router with Network: "+ printOut._networkId +". Adding Table entry on interface "+ interfaceNumber);
-			}
+            System.out.println("Router connected to "+_routingTable[interfaceNumber].node()+" Adding Table entry on interface "+interfaceNumber);
+            //Send router solicitation here? if node to see if node is router
 
 		}
 		else
@@ -58,8 +56,32 @@ public class Router extends SimEnt{
 
 
 		((Link) link).setConnector(this);
-		this.RS();
+
+        //check if link is fully connected before sending RS
+        if(_routingTable[interfaceNumber].link() instanceof Link && ((Link) _routingTable[interfaceNumber].link()).isFullyConnected()){
+            sendRouterSolicitation(interfaceNumber);
+        }
+
 	}
+
+    private void sendRouterSolicitation(int interfaceNumber){
+        //both statements send routersolicitation but due to different node types need to be handled differently
+        if (_routingTable[interfaceNumber].node() instanceof Node) {
+            RouterSolicitationMessage rsm = new RouterSolicitationMessage(
+                    this.getAddr(),
+                    ((Node) _routingTable[interfaceNumber].node()).getAddr()
+            );
+            send(_routingTable[interfaceNumber].link(), rsm, _now);
+        } else {
+            System.out.println("Router connected to another Router, sending RS");
+            RouterSolicitationMessage rsm = new RouterSolicitationMessage(
+                    this.getAddr(),
+                    ((Router) _routingTable[interfaceNumber].node()).getAddr()
+            );
+            send(_routingTable[interfaceNumber].link(), rsm, _now);
+        }
+    }
+
 
 	// This method searches for an entry in the routing table that matches
 	// the network number in the destination field of a messages. The link
@@ -68,39 +90,60 @@ public class Router extends SimEnt{
 	private SimEnt getInterface(int networkAddress, int nodeId)
 	{
 		SimEnt routerInterface=null;
-        for(int i=0; i<_interfaces; i++) {
-			if (_routingTable[i] == null) continue;
-
-			if (_routingTable[i].node() instanceof Node) {
-				NetworkAddr compare = ((Node) _routingTable[i].node()).getAddr();
-				if (compare.networkId() == networkAddress && compare.nodeId() == nodeId) {
+		for(int i=0; i<_interfaces; i++)
+			if (_routingTable[i] != null)
+			{
+                //check if node is a router
+                if (_routingTable[i].node().getClass() == Router.class) {
+                    Router tempRouter = (Router) _routingTable[i].node();
+                    int tempAddr = tempRouter.getAddr().networkId();
+                    if (tempAddr == networkAddress) {
+                        routerInterface = _routingTable[i].link();
+                    }
+                }
+                //checks if node is a normal node and connected to this router
+                else if (((Node) _routingTable[i].node()).getAddr().networkId() == networkAddress)
+				{
 					routerInterface = _routingTable[i].link();
 				}
+                //checks if node is normal and not connected to this router but has prefix to router we know.
+                else if (_prefixTable[i] != null){
+                    Router temp = (Router) _prefixTable[i].node();
+                    int prefixNetwork = temp.getAddr().networkId();
+                    int destPrefix = networkAddress / 10; // Assuming a fixed prefix length of 10 for simplicity
+                    if (prefixNetwork == destPrefix) {
+                        routerInterface = _routingTable[i].link();
+                    }
+                }
 			}
-			else{
-				Router tempRouter = (Router) _routingTable[i].node();
-				if (tempRouter._networkId == networkAddress) {
-					routerInterface = _routingTable[i].link();
-				}
-
-			}
-		}
-		// This case will happen if the "ip adress" isn't a neighbor to this router
-		//In which case we will check what link to forward it to
-		if(routerInterface == null){
-			int currentIndex = 0;
-			for(int i: forwardTableMatch){
-				if(i == networkAddress) routerInterface = forwardTableSend.get(currentIndex);
-				currentIndex++;
-			}
-		}
-		// Upon no match maybe send RS
-
-
+        //if no matching interface found, send to first available interface might give eternal loop but at least something
+        if (routerInterface == null){
+            for(int i=0; i<_interfaces; i++){
+                if(_prefixTable[i] != null){
+                    routerInterface = _prefixTable[i].link();
+                }
+            }
+        }
 		return routerInterface;
 
 	}
-	
+
+    private void addPrefixEntry(NetworkAddr sourceAddr) {
+        //find which interface the advertisment came from
+        for (int i = 0; i < _interfaces; i++) {
+            if (_routingTable[i] != null){
+                if (_routingTable[i].node().getClass() == Router.class) {
+                    Router connectedRouter = (Router) _routingTable[i].node();
+                    //check if advertisment source matches connected router
+                    if (connectedRouter.getAddr().equals(sourceAddr)) {
+                        _prefixTable[i] = _routingTable[i];
+                    }
+                }
+            }
+        }
+
+    }
+
 	
 	// When messages are received at the router this method is called
 
@@ -117,89 +160,23 @@ public class Router extends SimEnt{
 	
 	public void recv(SimEnt source, Event event)
 	{
-		if (!(event instanceof  Message)) return;
+        //System.out.println("Router received event: " + event + " from: " + source + " in " + this);
+		if (event instanceof Message)
+		{
+            SimEnt sendNext = getInterface(((Message) event).destination().networkId());
+            //System.out.println("Routing Message to: " + sendNext);
+            send(sendNext, event, _now);
 
-		Message m = (Message) event;
-		switch (m.getType()) {
-
-			case ROUTER_SOLICITATION:
-                //Send router advertisement
-				NetworkAddr thisRouterAddress = new NetworkAddr(_networkId,0);
-                //Message sendRouterAdvertisement = new Message(thisRouterAddress, m.source(), m.seq(), Message.MsgType.ROUTER_ADVERTISEMENT, 10);
-
-				Message sendRouterAdvertisement =
-						new Message(thisRouterAddress, m.source(), m.seq(),
-								Message.MsgType.ROUTER_ADVERTISEMENT, 100);
-				send(source, sendRouterAdvertisement, _now);
-
-				//Continue Sending RS to all neighbor routers
-				if(m.updateTTL()<=0) return;
-				//S
-				for(int i=0; i<_interfaces; i++) {
-					if (_routingTable[i] == null) continue;
-					if (_routingTable[i].node() instanceof Router) {
-						if(_routingTable[i].link() != source) {
-							send(_routingTable[i].link(), m, _now);
-						}
-					}
-				}
-
-				return;
-
-			case ROUTER_ADVERTISEMENT:
-				//
-                //Add stuff from the recived measage into the table?
-
-				//Is this RA for me?
-				if (m.destination().networkId() == _networkId){
-					if (forwardTableMatch.contains(m.source().networkId())) return;
-					//System.out.println("Router " + _networkId + " CONSUMED NOW");
-
-					this.forwardTableMatch.add(m.source().networkId());
-					this.forwardTableSend.add((Link) source);
-					//System.out.println(_networkId + "Router conatins");
-					for(int i : forwardTableMatch){
-						//System.out.println(i);
-					}
-					return;
-				}
-				//Not for me -> do I know where to send it, if yes send it to that?
-				if (forwardTableMatch.contains(m.destination().networkId())){
-					SimEnt sendThis = getInterface(m.destination().networkId(),0);
-					send(sendThis, m, _now);
-					return;
-				}else {
-					//System.out.println("Clueless");
-					this.RS();
-
-				}
-				//I have not seen this address before
-
-				//Continue Sending RA to all neighbor routers
-//				if(m.updateTTL()<=0) return;
-//				//S
-//				for(int i=0; i<_interfaces; i++) {
-//					if (_routingTable[i] == null) continue;
-//					if (_routingTable[i].node() instanceof Router) {
-//						if(_routingTable[i].link() != source) {
-//							send(_routingTable[i].link(), m, _now);
-//						}
-//					}
-//				}
-
-
-				return;
-
-			default:
-			//System.out.println("Router handles packet with seq: " + ((Message) event).seq()+" from node: "+((Message) event).source().networkId()+"." + ((Message) event).source().nodeId() );
-			SimEnt sendNext = getInterface(
-					((Message) event).destination().networkId(),
-					((Message) event).destination().nodeId()
-			);
-			//System.out.println("Router sends to node: " + ((Message) event).destination().networkId()+"." + ((Message) event).destination().nodeId());
-				if (sendNext == null) return;
-			send(sendNext, event, _now);
-
-		}
+		} else if(event instanceof RouterSolicitationMessage){
+            System.out.println("Solicitation RCV");
+            RouterAdvertismentMessage msg = new RouterAdvertismentMessage(this.getAddr(), ((RouterSolicitationMessage) event).source());
+            SimEnt sendNext = getInterface(((RouterSolicitationMessage) event).source().networkId());
+            addPrefixEntry(((RouterSolicitationMessage) event).source());
+            //System.out.println("Sending Router Advertisement to: " + sendNext.getClass().getSimpleName());
+            send(sendNext, msg, _now);
+        } else if(event instanceof RouterAdvertismentMessage){
+            System.out.println("Advertisment RCV");
+            addPrefixEntry(((RouterAdvertismentMessage) event).source());
+        }
 	}
 }

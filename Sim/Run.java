@@ -11,82 +11,59 @@ public class Run {
 		new java.io.File("poisson.csv").delete();
 		new java.io.File("uniform.csv").delete();
 
-		final boolean LOOP = true; // <-- set to false to disable the C–E–D loop
+        //Setting up the "home network"
+		Link stableLink = new Link();
+        Link moverLink = new Link();
 
-		// === Network A (10.x) ===
-		Link aHost1Link = new Link();
-		Node aHost1 = new Node(10, 1);   // 10.1
+		Node stableNode = new Node(11, 1);
+		Node moverNode = new Node(12, 2);
 
-		Link aHost2Link = new Link();
-		Node aHost2 = new Node(10, 2);   // 10.2
+        Router homerouter = new Router(4,1, 10);
 
-		Router routerA = new Router(10, 10); // plenty of ifaces
+        homerouter.connectInterface(0, stableLink, stableNode);
+        homerouter.connectInterface(1, moverLink, moverNode);
 
-		routerA.connectInterface(0, aHost1Link, aHost1); // A-if0 ↔ A host1
-		routerA.connectInterface(1, aHost2Link, aHost2); // A-if1 ↔ A host2
-		aHost1.setPeer(aHost1Link);
-		aHost2.setPeer(aHost2Link);
+        stableNode.setPeer(stableLink);
+        moverNode.setPeer(moverLink);
 
-		// === Network B (20.x) ===
-		Link bHost1Link = new Link();
-		Node bHost1 = new Node(20, 1);   // 20.1
-		bHost1.setPeer(bHost1Link);
 
-		Router routerB = new Router(20, 4); // B-if0..3
-		routerB.connectInterface(0, bHost1Link, bHost1); // B-if0 ↔ B host1
+        //Setting up the "foreign network"
+        Link foreignLink = new Link();
+        Node foreignNode = new Node(21, 3);
 
-		// === A ↔ B ===
-		Link abBackboneLink = new Link();
-		routerA.connectInterface(2, abBackboneLink, routerB); // A-if2
-		routerB.connectInterface(2, abBackboneLink, routerA); // B-if2
+        foreignNode.setPeer(foreignLink);
 
-		// === Network C (30.x) ===
-		Link cHost1Link = new Link();
-		Node cHost1 = new Node(30, 1);   // 30.1
-		Router routerC = new Router(30, 4); // C-if0..3 (needs extra iface for E)
-		routerC.connectInterface(0, cHost1Link, cHost1); // C-if0 ↔ C host1
-		cHost1.setPeer(cHost1Link);
+        Router foreignRouter = new Router(4,2, 20);
 
-		// === B ↔ C ===
-		Link bcBackboneLink = new Link();
-		routerB.connectInterface(1, bcBackboneLink, routerC); // B-if1
-		routerC.connectInterface(1, bcBackboneLink, routerB); // C-if1
+        foreignRouter.connectInterface(0, foreignLink, foreignNode);
 
-		// === Network D (40.x) ===
-		Link dHost1Link = new Link();
-		Node dHost1 = new Node(40, 1);   // 40.1
-		dHost1.setPeer(dHost1Link);
+        //connecting the networks
+        Link inbetweenLink = new Link();
 
-		Router routerD = new Router(40, 4); // D-if0..3
-		routerD.connectInterface(0, dHost1Link, dHost1); // D-if0 ↔ D host1
+        homerouter.connectInterface(2, inbetweenLink, foreignRouter);
+        foreignRouter.connectInterface(2, inbetweenLink, homerouter);
 
-		// === C ↔ D (line A–B–C–D) ===
-		Link cdBackboneLink = new Link();
-		routerC.connectInterface(2, cdBackboneLink, routerD); // C-if2
-		routerD.connectInterface(1, cdBackboneLink, routerC); // D-if1
 
-		// === OPTIONAL SMALL LOOP: C — E — D ===
-		Router routerE = null;
-		Link eHost1Link = null;
-		Node eHost1 = null;
-		if (LOOP) {
-			// Router E (50.x) + optional host
-			eHost1Link = new Link();
-			eHost1 = new Node(50, 1); // 50.1
-			eHost1.setPeer(eHost1Link);
+		// Generate some traffic
 
-			routerE = new Router(50, 3); // E-if0..2
-			routerE.connectInterface(0, eHost1Link, eHost1); // E-if0 ↔ E host1
 
-			// C ↔ E
-			Link ceLink = new Link();
-			routerC.connectInterface(3, ceLink, routerE); // C-if3
-			routerE.connectInterface(1, ceLink, routerC); // E-if1
+        stableNode.StartSending(21, 3, 100, 1, 0);
 
-			// E ↔ D
-			Link edLink = new Link();
-			routerE.connectInterface(2, edLink, routerD); // E-if2
-			routerD.connectInterface(2, edLink, routerE); // D-if2
+		// Start the simulation engine and of we go!
+		Thread t=new Thread(SimEngine.instance());
+	
+		t.start();
+
+		try
+		{
+            t.sleep(5);
+            //foreignRouter.connectInterface(2, inbetweenLink, homerouter);
+            t.sleep(5);
+
+            //homerouter.connectInterface(2, inbetweenLink, foreignRouter);
+            //t.sleep(30);
+            //homerouter.connectInterface(2, moverLink, moverNode);
+            t.join(3000);
 		}
 
 		// === Kick off discovery (use whichever routers you want) ===
