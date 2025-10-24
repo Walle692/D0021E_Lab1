@@ -2,15 +2,20 @@ package Sim;
 
 import java.util.TimerTask;
 
-public class BindingUpdate extends Message {
+public class BindingUpdate implements Event {
 
+    private NetworkAddr _source;
+    private NetworkAddr _destination;
+    private int _seq=0;
     private int _lifetime;
     private Node _node;
     private NetworkAddr _hoa;
 
     BindingUpdate (NetworkAddr from, NetworkAddr to, int seq, int lifetime, Node node, NetworkAddr homeAdress)
     {
-        super(from, to, seq);
+        _source = from;
+        _destination = to;
+        _seq = seq;
         _lifetime = lifetime;
         _node = node;
         _hoa = homeAdress;
@@ -18,17 +23,17 @@ public class BindingUpdate extends Message {
 
     public NetworkAddr source()
     {
-        return super.source();
+        return _source;
     }
 
     public NetworkAddr destination()
     {
-        return super.destination();
+        return _destination;
     }
 
     public int seq()
     {
-        return super.seq();
+        return _seq;
     }
 
     public NetworkAddr get_hoa() {

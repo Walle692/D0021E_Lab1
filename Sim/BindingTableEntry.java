@@ -34,12 +34,12 @@ public class BindingTableEntry {
         _lifetime = lifetime;
     }
 
-    public  void set_coa(int coa)
+    public  void set_coa(NetworkAddr coa)
     {
         _coa = coa;
     }
 
-    public   void set_hoa(int hoa)
+    public   void set_hoa(NetworkAddr hoa)
     {
         _hoa = hoa;
     }

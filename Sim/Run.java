@@ -44,10 +44,15 @@ public class Run {
         foreignRouter.connectInterface(2, inbetweenLink, homerouter);
 
 
-		// Generate some traffic
+		// move node to foreign network
+        // creating new moverlink bc reasons
+        Link ml2 = new Link();
+        moverNode.setPeer(ml2);
 
 
-        stableNode.StartSending(21, 3, 100, 1, 0);
+        homerouter.disconnectInterface(1);
+        foreignRouter.connectInterface(1, ml2, moverNode);
+
 
 		// Start the simulation engine and of we go!
 		Thread t=new Thread(SimEngine.instance());
@@ -56,13 +61,12 @@ public class Run {
 
 		try
 		{
-            t.sleep(5);
-            //foreignRouter.connectInterface(2, inbetweenLink, homerouter);
-            t.sleep(5);
 
-            //homerouter.connectInterface(2, inbetweenLink, foreignRouter);
-            //t.sleep(30);
-            //homerouter.connectInterface(2, moverLink, moverNode);
+            t.sleep(2000);
+            moverNode.set_Network(22);
+            t.sleep(2000);
+
+
             t.join(3000);
 		}
 		catch (Exception e)

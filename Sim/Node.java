@@ -15,6 +15,8 @@ public class Node extends SimEnt {
     private SimEnt _peer;
     private int _sentmsg=0;
     private int _seq = 0;
+    private NetworkAddr HOA;
+    private int homeNetworkset = 0;
 
 
     //binding table for when HA
@@ -43,6 +45,20 @@ public class Node extends SimEnt {
         }
     }
 
+    //sets a new netowrk address for the node used when chaning routers
+    public void set_Network(int network){
+        if(homeNetworkset == 0){
+            HOA = _id;
+            homeNetworkset = 1;
+        }
+        if(network == HOA.networkId()){
+            _id = new NetworkAddr(network, _id.nodeId());
+        } else {
+            _id = new NetworkAddr(network, _id.nodeId());
+            System.out.println("Node " + _id.networkId() + "." + _id.nodeId() + " changed network");
+            sendBindingUpdate();
+        }
+    }
 
     public NetworkAddr getAddr()
     {
@@ -144,12 +160,18 @@ public class Node extends SimEnt {
     }
 
 //**********************************************************************************
-    private void sendBindingAcknowledgement(){
-        //Not implemented
+    private void sendBindingAcknowledgement(int i){
+        BindingAck BA = new BindingAck(this.getAddr(), _bindingTable[i].get_coa(), 1);
+        send(_peer, BA, 0);
     }
 
     private void sendBindingUpdate(){
-        //Not implemented
+        //assumes that the home agent is a lower numbered address in the same network
+        NetworkAddr HomeAgentAddr = new NetworkAddr(HOA.networkId()- 1, HOA.nodeId()-1);
+        BindingUpdate BU = new BindingUpdate(this.getAddr(), HomeAgentAddr, 1, 100, this, HOA);
+        send(_peer, BU, 10);
+        System.out.println("sent bindingUpdate to HA at: " + HomeAgentAddr.networkId() + "." + HomeAgentAddr.nodeId());
+
     }
 
     private void receiveBindingUpdate(Event ev){
@@ -168,9 +190,10 @@ public class Node extends SimEnt {
         for (int i = 0; i < _bindingTable.length; i++){
             if (_bindingTable[i] != null && _bindingTable[i].get_hoa().equals(homeAddress)) {
                 // Update existing entry
-                _bindingTable[i].setCareOfAddress(careOfAddress);
-                _bindingTable[i].setLifetime(lifetime);
+                _bindingTable[i].set_coa(careOfAddress);
+                _bindingTable[i].set_lifetime(lifetime);
                 System.out.println("Updated binding table entry for: " + homeAddress);
+                sendBindingAcknowledgement(i);
                 return;
             }
         }
@@ -180,6 +203,7 @@ public class Node extends SimEnt {
             if (_bindingTable[i] == null){
                 _bindingTable[i] = new BindingTableEntry(homeAddress, careOfAddress, lifetime);
                 System.out.println("Added new binding table entry for: " + homeAddress);
+                sendBindingAcknowledgement(i);
                 return;
             }
         }

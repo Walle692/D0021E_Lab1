@@ -17,10 +17,13 @@ public class Link extends SimEnt{
 	
 	public void setConnector(SimEnt connectTo)
 	{
-		if (_connectorA == null) 
-			_connectorA=connectTo;
-		else
-			_connectorB=connectTo;
+		if (_connectorA == null) {
+			_connectorA = connectTo;
+			System.out.println("ConnectorA set to: " + connectTo);
+		} else {
+			_connectorB = connectTo;
+			System.out.println("ConnectorB set to: " + connectTo);
+		}
 	}
 
 	// Method to check if the link is connected on both ends
@@ -33,15 +36,18 @@ public class Link extends SimEnt{
 	public void recv(SimEnt src, Event ev)
 	{
 		if (!isFullyConnected()) {
-			System.err.println("Error: Link is not fully connected. Event cannot be forwarded.");
+			System.err.println("Error: Link is not fully connected. ConnectorA: " + _connectorA + ", ConnectorB: " + _connectorB);
 			return;
 		}
 
-		// Forward the event to the other connector
-		if (src == _connectorA) {
-			send(_connectorB, ev, _now);
-		} else {
-			send(_connectorA, ev, _now);
-		}
+		// Ensure all event types, including BindingUpdate, are forwarded
+        System.out.println("Link received event: " + ev + " from: " + src);
+        if (src == _connectorA) {
+            System.out.println("Link forwarding event from ConnectorA to ConnectorB: " + ev);
+            send(_connectorB, ev, _now);
+        } else {
+            System.out.println("Link forwarding event from ConnectorB to ConnectorA: " + ev);
+            send(_connectorA, ev, _now);
+        }
 	}
 }

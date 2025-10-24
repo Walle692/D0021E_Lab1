@@ -24,6 +24,18 @@ public class Router extends SimEnt{
     {
         return _id;
     }
+
+    public void disconnectInterface(int interfaceNumber)
+    {
+        if (interfaceNumber<_interfaces)
+        {
+            System.out.println("Router disconnected from "+_routingTable[interfaceNumber].node()+" Removing Table entry");
+            _routingTable[interfaceNumber] = null;
+            _prefixTable[interfaceNumber] = null;
+        }
+        else
+            System.out.println("Trying to disconnect from port not in router");
+    }
 	
 	// This method connects links to the router and also informs the 
 	// router of the host connects to the other end of the link
@@ -139,11 +151,11 @@ public class Router extends SimEnt{
 	
 	public void recv(SimEnt source, Event event)
 	{
-        //System.out.println("Router received event: " + event + " from: " + source + " in " + this);
+        System.out.println("Router received event: " + event + " from: " + source + " in " + this);
 		if (event instanceof Message)
 		{
             SimEnt sendNext = getInterface(((Message) event).destination().networkId());
-            //System.out.println("Routing Message to: " + sendNext);
+            System.out.println("Routing Message to: " + sendNext);
             send(sendNext, event, _now);
 
 		} else if(event instanceof RouterSolicitationMessage){
@@ -156,6 +168,17 @@ public class Router extends SimEnt{
         } else if(event instanceof RouterAdvertismentMessage){
             System.out.println("Advertisment RCV");
             addPrefixEntry(((RouterAdvertismentMessage) event).source());
+        } else if (event instanceof BindingUpdate) {
+            System.out.println("Router received BindingUpdate: " + event + " from: " + source);
+            // Add logic to handle BindingUpdate here
+            SimEnt sendNext = getInterface(((BindingUpdate) event).get_hoa().networkId());
+            if (sendNext != null) {
+                System.out.println("Forwarding BindingUpdate to: " + sendNext);
+                send(sendNext, event, _now);
+            } else {
+                System.err.println("No route found for BindingUpdate: " + event);
+            }
         }
+
 	}
 }
