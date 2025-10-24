@@ -2,11 +2,16 @@ package Sim;
 
 // This class implements a simple router
 
+import java.util.ArrayList;
+
 public class Router extends SimEnt{
 
     // used to store the prefix table for routing
     private RouteTableEntry [] _prefixTable;
 	private RouteTableEntry [] _routingTable;
+
+	private ArrayList<Integer> forwardTableMatch = new ArrayList<>();
+	private ArrayList<Link> forwardTableSend = new ArrayList<>();
 	private int _interfaces;
 	private int _now=0;
     private NetworkAddr _id;
@@ -27,14 +32,17 @@ public class Router extends SimEnt{
 	
 	// This method connects links to the router and also informs the 
 	// router of the host connects to the other end of the link
-	
+
+
 	public void connectInterface(int interfaceNumber, SimEnt link, SimEnt node)
 	{
 		if (interfaceNumber<_interfaces)
 		{
             for (int i=0;i<_interfaces;i++){
                 if(_routingTable[i]!=null && _routingTable[i].node().equals(node)){
-                    System.out.println("Router already connected to "+_routingTable[i].node()+" Removing Table entry");
+
+					NetworkAddr printOut = ((Node) _routingTable[i].node()).getAddr();
+                    System.out.println("Router already connected to "+printOut.networkId() +"." + printOut.nodeId()+" Removing Table entry");
                     _routingTable[i] = null;
                 }
             }
@@ -45,7 +53,8 @@ public class Router extends SimEnt{
 		}
 		else
 			System.out.println("Trying to connect to port not in router");
-		
+
+
 		((Link) link).setConnector(this);
 
         //check if link is fully connected before sending RS
@@ -78,7 +87,7 @@ public class Router extends SimEnt{
 	// the network number in the destination field of a messages. The link
 	// represents that network number is returned
 	
-	private SimEnt getInterface(int networkAddress)
+	private SimEnt getInterface(int networkAddress, int nodeId)
 	{
 		SimEnt routerInterface=null;
 		for(int i=0; i<_interfaces; i++)
@@ -116,6 +125,7 @@ public class Router extends SimEnt{
             }
         }
 		return routerInterface;
+
 	}
 
     private void addPrefixEntry(NetworkAddr sourceAddr) {
@@ -136,6 +146,17 @@ public class Router extends SimEnt{
 
 	
 	// When messages are received at the router this method is called
+
+	public void RS(){
+		NetworkAddr thisRouterAddress = new NetworkAddr(_networkId,0);
+		Message m = new Message(thisRouterAddress, null, 0, Message.MsgType.ROUTER_SOLICITATION, 100);
+		for(int i=0; i<_interfaces; i++) {
+			if (_routingTable[i] == null) continue;
+			if (_routingTable[i].node() instanceof Router) {
+				send(_routingTable[i].link(), m, _now);
+			}
+		}
+	}
 	
 	public void recv(SimEnt source, Event event)
 	{
