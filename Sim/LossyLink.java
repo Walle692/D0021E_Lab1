@@ -41,7 +41,7 @@ public class LossyLink extends Link {
         if (ev instanceof Message)
         {
             if(this.dropOrNot()){
-                System.out.println("Link lost msg, packet dropped");
+                System.out.println("Link lost msg, packet dropped" + ((Message) ev).seq() + " of type " + ((Message) ev).getType());
                 return;
             }
             //System.out.println("Link recv msg, passes it through");

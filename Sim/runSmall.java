@@ -51,10 +51,16 @@ public class runSmall {
 		routerB.connectInterface(1, bcBackboneLink, routerC); // B-if1
 		routerC.connectInterface(1, bcBackboneLink, routerB); // C-if1
 
+        // === C ↔ A ===
+        Link caBackboneLink = new Link();
+        routerC.connectInterface(4, caBackboneLink, routerA);
+        routerA.connectInterface(8, caBackboneLink, routerC);
 
 
 
-        aHost1.StartSending(10, 2, 1000, 5, 0);
+
+        cHost1.StartSending(10, 2, 100, 1, 0);
+        aHost2.StartSending(30, 4, 100, 2, 2000);
 
 
 
@@ -69,6 +75,13 @@ public class runSmall {
             Link aHost2Link2 = new Link(); //create a new link
             aHost2.setPeer(aHost2Link2); //set its peer to the new
             routerB.connectInterface(3, aHost2Link2, aHost2); // connect to routerB
+            aHost2.sendBU(); //send binding update to its home agent
+            t.sleep(5);
+            Link aHost2Link3 = new Link();
+            routerB.disconnectInterface(3); // disconnect aHost2 again
+            aHost2.updateNetworkaddr(10); //update its address back to original network
+            aHost2.setPeer(aHost2Link3); //set its peer to the new link
+            routerA.connectInterface(1, aHost2Link3, aHost2); // reconnect to routerA
             aHost2.sendBU(); //send binding update to its home agent
 
 			t.join(3000);

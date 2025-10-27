@@ -274,6 +274,39 @@ public class Router extends SimEnt{
                                 send(sendNext, bA, _now);
                                 break;
                             }
+                        } else if(_bindingTable[i] != null) {
+                            //checking if the binding already exists, if so update it
+                            NetworkAddr existingHoa = _bindingTable[i].get_hoa();
+                            //checking if the node has returned home in this case hoa should equal m.source
+                            if (existingHoa == m.source()) {
+                                _bindingTable[i] = null;
+                                //shift all entries up
+                                for (int j = i; j < _bindingTable.length - 1; j++) {
+                                    _bindingTable[j] = _bindingTable[j + 1];
+                                }
+                                break;
+                            //check if the node has a entry already
+                            } else if (existingHoa.nodeId() == m.source().nodeId()) {
+                                _bindingTable[i] = new BindingTableEntry(existingHoa, m.source());
+                                System.out.println("Router " + _networkId + " updated binding: " + existingHoa.networkId() + "." + existingHoa.nodeId() +
+                                        " -> " + m.source().networkId() + "." + m.source().nodeId());
+                                //send binding acknowledgement
+                                NetworkAddr tra = new NetworkAddr(_networkId,0);
+                                Message bA = new Message(
+                                        tra,
+                                        m.source(),
+                                        m.seq(),
+                                        Message.MsgType.BINDING_ACKNOWLEDGEMENT,
+                                        10
+                                );
+                                SimEnt sendNext = getInterface(
+                                        m.source().networkId(),
+                                        m.source().nodeId()
+                                );
+                                System.out.println("sending BINDING_ACKNOWLEDGEMENT to " + m.source().networkId() + "." + m.source().nodeId());
+                                send(sendNext, bA, _now);
+                                break;
+                            }
                         }
                     }
                 } else {

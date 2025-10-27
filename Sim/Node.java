@@ -57,6 +57,12 @@ public class Node extends SimEnt {
     private int _toNetwork = 0;
     private int _toHost = 0;
 
+    private boolean _losslessAccepted = false;
+    private int _losslesslastack = 0;
+    private int _losslessSentmsg = 0;
+    private Message _lastSentMessage = null;
+    private int _Timeout = 5;
+
     private double median, stddev;
 
     private String currentMode = "uniform";
@@ -70,6 +76,19 @@ public class Node extends SimEnt {
         _toHost = node;
         _seq = startSeq;
         send(this, new TimerEvent(),0);
+    }
+
+    public void StartLossLessSending(int network, int node, int number){
+        // this is used to start lossless sending
+        this.currentMode = "LossLess";
+        _stopSendingAfter = number;
+        _toNetwork = network;
+        _toHost = node;
+        Message requestMsg = new Message(_id, new NetworkAddr(_toNetwork, _toHost), _stopSendingAfter, Message.MsgType.LT_REQUEST, 10);
+        _lastSentMessage = requestMsg;
+        send(_peer, requestMsg,0);
+        System.out.println("Node "+_id.networkId()+ "." + _id.nodeId() +" sent LT_REQUEST for packets: " + this._stopSendingAfter + " at time "+SimEngine.getTime());
+        send(this, new TimerEvent(), 1);
     }
 
     public void updateNetworkaddr(int network){
@@ -147,7 +166,7 @@ public class Node extends SimEnt {
     }
 
     public void sendBU(){
-        send(_peer, new Message(_id, new NetworkAddr(_homeAgent, 0),_seq, Message.MsgType.BINDING_UPDATE, 2),0);
+        send(_peer, new Message(_id, new NetworkAddr(_homeAgent, 0),0, Message.MsgType.BINDING_UPDATE, 2),0);
         System.out.println("Node "+_id.networkId()+ "." + _id.nodeId() +" sent BU with seq: "+_seq + " at time "+SimEngine.getTime());
         _seq++;
     }
@@ -158,8 +177,47 @@ public class Node extends SimEnt {
 
     public void recv(SimEnt src, Event ev)
     {
-        if (ev instanceof TimerEvent)
+        if (ev instanceof TimerEvent && this.currentMode.equals("LossLess"))
         {
+            //if timeout is not zero, check if we can send next message, otherwise decrease timeout
+            if (_Timeout > 0){
+                // check if we have accepted the last sent message and not reached the limit
+                if (_losslessAccepted && _losslessSentmsg < _stopSendingAfter && _losslesslastack == _losslessSentmsg + 1){
+                    //if success, send next message
+                    Message nextMsg = new Message(_id, new NetworkAddr(_toNetwork, _toHost), _losslesslastack, Message.MsgType.LT_MESSAGE, 10);
+                    //reset timeout
+                    _Timeout = 5;
+                    //increment sent msg count
+                    _losslessSentmsg++;
+                    //save last sent message
+                    _lastSentMessage = nextMsg;
+                    System.out.println("Node "+_id.networkId()+ "." + _id.nodeId() +" sent message with seq: "+_losslessSentmsg + " at time "+SimEngine.getTime());
+                    send(_peer, nextMsg,0);
+                    send(this, new TimerEvent(), 1);
+                } else if (_losslessSentmsg >= _stopSendingAfter){
+                    return;
+                }
+                else{
+                    _Timeout--;
+                    send(this, new TimerEvent(),1);
+                }
+            }
+            //timeout reached zero, resend last message
+            else{
+                // reset timeout
+                _Timeout = 5;
+                // resend last message
+                send(_peer, _lastSentMessage,0);
+                // log resend
+                System.out.println("timeout reached, Node "+_id.networkId()+ "." + _id.nodeId() +" resent message with seq: "+_lastSentMessage.seq() + " at time "+SimEngine.getTime());
+                // schedule next timer event
+                send(this, new TimerEvent(),1);
+            }
+        }
+
+        else if (ev instanceof TimerEvent)
+        {
+
             if (_stopSendingAfter > _sentmsg)
             {
                 _sentmsg++;
@@ -183,8 +241,38 @@ public class Node extends SimEnt {
 
         if (ev instanceof Message)
         {
-
             Message m = (Message) ev;
+
+            //check if the message is an LT_ACKNOWLEDGEMENT
+            if(m.getType() == Message.MsgType.LT_ACKNOWLEDGEMENT){
+                System.out.println("Node "+_id.networkId()+ "." + _id.nodeId() +" received LT_ACK with seq: "+m.seq() + " at time "+SimEngine.getTime());
+                //set accepted to true
+                _losslessAccepted = true;
+                //update last ack
+                _losslesslastack = m.seq();
+                //reset timeout
+                _Timeout = 5;
+                return;
+            }
+
+            // check if the message is an LT_REQUEST
+            if(m.getType() == Message.MsgType.LT_REQUEST) {
+                System.out.println("Node " + _id.networkId() + "." + _id.nodeId() + " received LT_REQUEST for packets: " + m.seq() + " at time " + SimEngine.getTime());
+                //send LT_ACKNOWLEDGEMENT seqnr 1 to the requester
+                Message ackMsg = new Message(_id, m.source(), 1, Message.MsgType.LT_ACKNOWLEDGEMENT, 10);
+                send(_peer, ackMsg, 0);
+                _lastSentMessage = ackMsg;
+            }
+
+            //check if the message is LT_MESSAGE
+            if(m.getType() == Message.MsgType.LT_MESSAGE) {
+                System.out.println("Node " + _id.networkId() + "." + _id.nodeId() + " received LT_MESSAGE with seq: " + m.seq() + " at time " + SimEngine.getTime());
+                Message ackMsg = new Message(_id, m.source(), m.seq() + 1, Message.MsgType.LT_ACKNOWLEDGEMENT, 10);
+                send(_peer, ackMsg, 0);
+                _lastSentMessage = ackMsg;
+            }
+
+            //check if the message is a BINDING_ACKNOWLEDGEMENT
             if(m.getType() == Message.MsgType.BINDING_ACKNOWLEDGEMENT){
                 System.out.println("Node "+_id.networkId()+ "." + _id.nodeId() +" received BA with seq: "+m.seq() + " at time "+SimEngine.getTime());
                 return;
@@ -198,7 +286,7 @@ public class Node extends SimEnt {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-            System.out.println("Node "+_id.networkId()+ "." + _id.nodeId() +" receives message with seq: "+((Message) ev).seq() + " at time "+SimEngine.getTime() + " from "+((Message) ev).source().networkId()+ "." + ((Message) ev).source().nodeId());
+            //System.out.println("Node "+_id.networkId()+ "." + _id.nodeId() +" receives message with seq: "+((Message) ev).seq() + " at time "+SimEngine.getTime() + " from "+((Message) ev).source().networkId()+ "." + ((Message) ev).source().nodeId());
 
         }
     }
